@@ -277,6 +277,8 @@ class TestArchivalNeverLosesTheCall:
         result = await finalize(call(recording_bytes=b"audio"), storage=storage, engine=None)
         assert result.recording_path == f"{TENANT}/2026-10-14/call_abc.ulaw"
         assert storage.written[result.recording_path] == b"audio"
+        assert result.transcript_path == f"{TENANT}/2026-10-14/call_abc.txt"
+        assert b"pipe burst" in storage.written[result.transcript_path]
 
     async def test_the_transcript_we_keep_is_the_one_we_observed(self):
         """Invariant 7. xAI's cache drops history after about thirty minutes
