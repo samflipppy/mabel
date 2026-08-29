@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
-import { SiteShell } from "@/components/site-shell";
 
 const display = Fraunces({
   variable: "--font-display",
@@ -15,8 +14,8 @@ const body = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
-  title: "Mabel — office",
-  description: "Overnight recap and monthly report. The owner does not have to log in.",
+  title: "Mabel",
+  description: "Mabel answers the phone when a contractor can't.",
 };
 
 export default function RootLayout({
@@ -26,8 +25,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      {/* No chrome here. The (app) and (marketing) groups each bring their
+          own, because the portal's navigation has no business on a marketing
+          page and vice versa. */}
       <body className={`${display.variable} ${body.variable} min-h-screen antialiased`}>
-        <SiteShell>{children}</SiteShell>
+        {children}
       </body>
     </html>
   );
