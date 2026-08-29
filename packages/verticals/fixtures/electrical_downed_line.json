@@ -1,11 +1,11 @@
 {
-  "id": "hvac_no_heat_freezing",
-  "trade": "hvac",
+  "id": "electrical_downed_line",
+  "trade": "electrical",
   "rule_version": 2,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "We have no heat and it's ten degrees out."
+      "There's a power line down across my driveway."
     ],
     "captured": {
       "name": "Pat Example",
@@ -15,18 +15,14 @@
       "urgency": "as described",
       "source": "google"
     },
-    "context": {
-      "outdoor_temp_f": 10
-    }
+    "context": {}
   },
   "expect": {
-    "trigger": "NO_HEAT_FREEZING",
+    "trigger": "DOWNED_LINE",
     "severity": "wake_now",
     "escalate": true,
     "notify": "now",
     "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
-  },
-  "model_code": "NO_HEAT_FREEZING"
+    "capture_gaps": []
+  }
 }

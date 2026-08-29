@@ -1,11 +1,11 @@
 {
-  "id": "hvac_no_heat_freezing",
+  "id": "hvac_no_heat_vulnerable",
   "trade": "hvac",
   "rule_version": 2,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "We have no heat and it's ten degrees out."
+      "The heat is out and my mother is on oxygen here."
     ],
     "captured": {
       "name": "Pat Example",
@@ -16,17 +16,17 @@
       "source": "google"
     },
     "context": {
-      "outdoor_temp_f": 10
+      "outdoor_temp_f": 55,
+      "vulnerable_occupant": true
     }
   },
   "expect": {
-    "trigger": "NO_HEAT_FREEZING",
+    "trigger": "NO_HEAT_VULNERABLE",
     "severity": "wake_now",
     "escalate": true,
     "notify": "now",
     "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
+    "capture_gaps": []
   },
-  "model_code": "NO_HEAT_FREEZING"
+  "note": "Mild outside, still an emergency, because of who is in the house."
 }

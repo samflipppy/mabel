@@ -45,9 +45,7 @@ SKIP_REASON = (
 # A scratch database is one we are allowed to create and drop tables in. If the
 # URL looks like it could be a real one, we stop. The cost of being wrong here
 # is somebody's call history.
-PRODUCTION_SHAPED = re.compile(
-    r"(prod|production|supabase\.co|\.fly\.dev|amazonaws\.com)", re.I
-)
+PRODUCTION_SHAPED = re.compile(r"(prod|production|supabase\.co|\.fly\.dev|amazonaws\.com)", re.I)
 
 
 def _test_database_url() -> str | None:
@@ -79,11 +77,30 @@ def _load_sql() -> str:
     return "\n".join(module.SECTIONS)
 
 
+def pytest_collection_modifyitems(config, items):
+    """Skip the whole suite at collection time when there is no database.
+
+    Deliberately not a `pytest.skip()` inside the engine fixture: skipping from
+    inside an async fixture confuses pytest-asyncio into an assertion error, so
+    the suite would fail for an unrelated reason and hide the real one, which is
+    that RLS went unverified.
+    """
+    if _test_database_url() is not None:
+        return
+    skip = pytest.mark.skip(reason=SKIP_REASON)
+    here = Path(__file__).parent
+    for item in items:
+        # This hook is handed every item in the session, not just the ones
+        # under this directory. Without the path filter it skips the whole
+        # repo's tests, which is a very quiet way to stop testing anything.
+        if here in Path(str(item.fspath)).parents:
+            item.add_marker(skip)
+
+
 @pytest_asyncio.fixture(scope="session")
 async def engine() -> AsyncIterator[AsyncEngine]:
     url = _test_database_url()
-    if url is None:
-        pytest.skip(SKIP_REASON, allow_module_level=True)
+    assert url is not None, "collection should have skipped this suite"
 
     admin = create_async_engine(url, poolclass=None, connect_args={"statement_cache_size": 0})
 
@@ -190,9 +207,7 @@ async def two_tenants(engine: AsyncEngine) -> AsyncIterator[tuple[UUID, UUID]]:
     yield alpha, beta
 
     async with engine.begin() as conn:
-        await conn.execute(
-            text("DELETE FROM tenants WHERE id = ANY(:ids)"), {"ids": [alpha, beta]}
-        )
+        await conn.execute(text("DELETE FROM tenants WHERE id = ANY(:ids)"), {"ids": [alpha, beta]})
 
 
 async def rows_visible(conn: AsyncConnection, table: str) -> int:

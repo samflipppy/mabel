@@ -1,0 +1,102 @@
+{
+  "trade": "towing",
+  "version": 1,
+  "effective_from": "2026-08-01",
+  "verified": true,
+  "triggers": [
+    {
+      "code": "ACCIDENT_SCENE",
+      "severity": "wake_now",
+      "label": "Crash or collision, wake me",
+      "phrases": [
+        "accident",
+        "crashed",
+        "collision",
+        "wreck",
+        "hit another car"
+      ],
+      "safety_script": "advise_stay_with_vehicle"
+    },
+    {
+      "code": "BLOCKING_TRAFFIC",
+      "severity": "wake_now",
+      "label": "Vehicle stopped in a traffic lane, wake me",
+      "phrases": [
+        "blocking traffic",
+        "in the middle of the road",
+        "on the highway",
+        "in a traffic lane",
+        "on the freeway"
+      ],
+      "safety_script": "advise_stay_with_vehicle"
+    },
+    {
+      "code": "STRANDED_VULNERABLE",
+      "severity": "wake_now",
+      "label": "Stranded with a child, an elderly or an unwell passenger, wake me",
+      "phrases": [
+        "stranded",
+        "broken down",
+        "stuck on the side"
+      ],
+      "require": {
+        "vulnerable_occupant": true
+      }
+    },
+    {
+      "code": "STRANDED_ROADSIDE",
+      "severity": "wake_now",
+      "label": "Stranded at the roadside, wake me",
+      "phrases": [
+        "stranded",
+        "broken down",
+        "stuck on the side of the road",
+        "won't move"
+      ]
+    },
+    {
+      "code": "VEHICLE_WONT_START",
+      "severity": "morning",
+      "label": "Car will not start at home, the morning is fine",
+      "phrases": [
+        "won't start",
+        "will not start",
+        "dead battery",
+        "car won't turn over"
+      ]
+    },
+    {
+      "code": "SCHEDULED_TRANSPORT",
+      "severity": "routine",
+      "label": "A tow they want booked in advance, whenever you get to it",
+      "phrases": [
+        "schedule a tow",
+        "move a vehicle",
+        "transport a car",
+        "book a tow"
+      ]
+    }
+  ],
+  "required_capture": [
+    "name",
+    "address",
+    "callback",
+    "problem",
+    "urgency",
+    "source"
+  ],
+  "never_say": [
+    "price",
+    "estimate_range",
+    "hourly_rate",
+    "arrival_time"
+  ],
+  "fixtures": [
+    "towing_blocking_traffic.json",
+    "towing_stranded_night.json",
+    "towing_wont_start_morning.json",
+    "towing_scheduled_routine.json",
+    "towing_accident_scene.json",
+    "towing_stranded_vulnerable.json"
+  ]
+}

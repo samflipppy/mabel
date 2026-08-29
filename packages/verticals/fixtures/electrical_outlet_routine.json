@@ -1,11 +1,11 @@
 {
-  "id": "electrical_burning_smell",
+  "id": "electrical_outlet_routine",
   "trade": "electrical",
   "rule_version": 2,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "There's a burning smell coming from the outlet in the hallway."
+      "One outlet is dead in the spare room, no rush."
     ],
     "captured": {
       "name": "Pat Example",
@@ -18,13 +18,11 @@
     "context": {}
   },
   "expect": {
-    "trigger": "BURNING_SMELL",
-    "severity": "wake_now",
-    "escalate": true,
-    "notify": "now",
-    "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
-  },
-  "model_code": "BURNING_SMELL"
+    "trigger": "OUTLET_NOT_WORKING",
+    "severity": "routine",
+    "escalate": false,
+    "notify": "recap_7am",
+    "urgency": "routine",
+    "capture_gaps": []
+  }
 }

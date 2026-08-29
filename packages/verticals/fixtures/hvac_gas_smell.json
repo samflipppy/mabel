@@ -1,11 +1,11 @@
 {
-  "id": "hvac_no_heat_freezing",
+  "id": "hvac_gas_smell",
   "trade": "hvac",
   "rule_version": 2,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "We have no heat and it's ten degrees out."
+      "I smell gas near the furnace."
     ],
     "captured": {
       "name": "Pat Example",
@@ -15,12 +15,10 @@
       "urgency": "as described",
       "source": "google"
     },
-    "context": {
-      "outdoor_temp_f": 10
-    }
+    "context": {}
   },
   "expect": {
-    "trigger": "NO_HEAT_FREEZING",
+    "trigger": "GAS_SMELL",
     "severity": "wake_now",
     "escalate": true,
     "notify": "now",
@@ -28,5 +26,5 @@
     "capture_gaps": [],
     "matched_by": "both"
   },
-  "model_code": "NO_HEAT_FREEZING"
+  "model_code": "GAS_SMELL"
 }

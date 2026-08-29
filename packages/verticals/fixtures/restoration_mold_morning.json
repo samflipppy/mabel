@@ -1,11 +1,11 @@
 {
-  "id": "restoration_active_water",
+  "id": "restoration_mold_morning",
   "trade": "restoration",
   "rule_version": 1,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "The water is still coming in from the upstairs bathroom."
+      "We found mold behind the washing machine."
     ],
     "captured": {
       "name": "Pat Example",
@@ -18,13 +18,11 @@
     "context": {}
   },
   "expect": {
-    "trigger": "ACTIVE_WATER_INTRUSION",
-    "severity": "wake_now",
-    "escalate": true,
-    "notify": "now",
-    "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
-  },
-  "model_code": "ACTIVE_WATER_INTRUSION"
+    "trigger": "MOLD_DISCOVERED",
+    "severity": "morning",
+    "escalate": false,
+    "notify": "recap_7am",
+    "urgency": "soon",
+    "capture_gaps": []
+  }
 }

@@ -1,11 +1,11 @@
 {
-  "id": "hvac_no_heat_freezing",
+  "id": "hvac_override_bad_severity_falls_back",
   "trade": "hvac",
   "rule_version": 2,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "We have no heat and it's ten degrees out."
+      "I smell gas by the furnace."
     ],
     "captured": {
       "name": "Pat Example",
@@ -15,18 +15,20 @@
       "urgency": "as described",
       "source": "google"
     },
-    "context": {
-      "outdoor_temp_f": 10
-    }
+    "context": {}
   },
   "expect": {
-    "trigger": "NO_HEAT_FREEZING",
+    "trigger": "GAS_SMELL",
     "severity": "wake_now",
     "escalate": true,
     "notify": "now",
     "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
+    "capture_gaps": []
   },
-  "model_code": "NO_HEAT_FREEZING"
+  "overrides": {
+    "GAS_SMELL": {
+      "severity": "whenever"
+    }
+  },
+  "note": "A malformed override does not silently downgrade a gas leak. It falls back to the library default, which is the safe direction to fail in."
 }

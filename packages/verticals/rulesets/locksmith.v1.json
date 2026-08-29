@@ -1,0 +1,100 @@
+{
+  "trade": "locksmith",
+  "version": 1,
+  "effective_from": "2026-08-01",
+  "verified": true,
+  "triggers": [
+    {
+      "code": "CHILD_OR_PET_LOCKED_IN",
+      "severity": "wake_now",
+      "label": "Child or animal locked in a car or a house, wake me and tell them to call 911",
+      "phrases": [
+        "baby is locked in",
+        "child is locked in",
+        "kid locked in the car",
+        "dog is locked in",
+        "pet locked in the car"
+      ],
+      "safety_script": "advise_call_911_child_or_pet"
+    },
+    {
+      "code": "BURGLARY_DAMAGE",
+      "severity": "wake_now",
+      "label": "Break-in, door or lock damaged, wake me",
+      "phrases": [
+        "broke in",
+        "break in",
+        "burglary",
+        "someone forced the door",
+        "kicked in the door"
+      ],
+      "safety_script": "advise_call_police_first"
+    },
+    {
+      "code": "LOCKED_OUT",
+      "severity": "wake_now",
+      "label": "Locked out of a house or a car, wake me",
+      "phrases": [
+        "locked out",
+        "locked myself out",
+        "keys are inside",
+        "can't get in"
+      ]
+    },
+    {
+      "code": "BROKEN_KEY_IN_LOCK",
+      "severity": "morning",
+      "label": "Key snapped off in the lock, the morning is fine",
+      "phrases": [
+        "key broke",
+        "broken key",
+        "key snapped",
+        "key stuck in the lock"
+      ]
+    },
+    {
+      "code": "SAFE_LOCKOUT",
+      "severity": "morning",
+      "label": "Locked out of a safe, the morning is fine",
+      "phrases": [
+        "safe won't open",
+        "locked out of the safe",
+        "forgot the safe combination"
+      ]
+    },
+    {
+      "code": "REKEY_REQUEST",
+      "severity": "routine",
+      "label": "Rekey or new locks, whenever you get to it",
+      "phrases": [
+        "rekey",
+        "change the locks",
+        "new locks",
+        "duplicate key"
+      ]
+    }
+  ],
+  "required_capture": [
+    "name",
+    "address",
+    "callback",
+    "problem",
+    "urgency",
+    "source"
+  ],
+  "never_say": [
+    "price",
+    "estimate_range",
+    "hourly_rate",
+    "arrival_time"
+  ],
+  "fixtures": [
+    "locksmith_child_in_car.json",
+    "locksmith_locked_out.json",
+    "locksmith_broken_key.json",
+    "locksmith_rekey_routine.json",
+    "locksmith_burglary.json",
+    "locksmith_safe_lockout.json",
+    "locksmith_safe_lockout_worded_as_locked_out.json"
+  ]
+}

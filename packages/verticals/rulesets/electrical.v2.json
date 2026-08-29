@@ -1,0 +1,111 @@
+{
+  "trade": "electrical",
+  "version": 2,
+  "effective_from": "2026-08-01",
+  "verified": true,
+  "triggers": [
+    {
+      "code": "BURNING_SMELL",
+      "severity": "wake_now",
+      "label": "Burning smell from an outlet or the panel, wake me and tell them to get out",
+      "phrases": [
+        "burning smell",
+        "smells like burning",
+        "smell burning",
+        "burning plastic",
+        "something is burning"
+      ],
+      "safety_script": "advise_leave_and_call_911"
+    },
+    {
+      "code": "SPARKING",
+      "severity": "wake_now",
+      "label": "Sparking outlet or panel, wake me",
+      "phrases": [
+        "sparking",
+        "sparks",
+        "arcing",
+        "outlet sparked",
+        "panel is sparking"
+      ],
+      "safety_script": "advise_leave_and_call_911"
+    },
+    {
+      "code": "DOWNED_LINE",
+      "severity": "wake_now",
+      "label": "Downed power line, wake me and tell them to stay away",
+      "phrases": [
+        "downed line",
+        "power line down",
+        "wire down",
+        "line is down"
+      ],
+      "safety_script": "advise_leave_and_call_911"
+    },
+    {
+      "code": "WATER_AND_ELECTRICAL",
+      "severity": "wake_now",
+      "label": "Water reaching electrical, wake me and tell them to get out",
+      "phrases": [
+        "water on the panel",
+        "water in the panel",
+        "water near the breaker"
+      ],
+      "safety_script": "advise_leave_and_call_911"
+    },
+    {
+      "code": "FULL_OUTAGE",
+      "severity": "wake_now",
+      "label": "Whole house has no power, wake me",
+      "phrases": [
+        "no power at all",
+        "whole house has no power",
+        "everything is out"
+      ]
+    },
+    {
+      "code": "PARTIAL_OUTAGE",
+      "severity": "morning",
+      "label": "Part of the house has no power, the morning is fine",
+      "phrases": [
+        "half the house",
+        "some outlets",
+        "breaker keeps tripping",
+        "one room has no power"
+      ]
+    },
+    {
+      "code": "OUTLET_NOT_WORKING",
+      "severity": "routine",
+      "label": "A single outlet or switch out, whenever you get to it",
+      "phrases": [
+        "outlet not working",
+        "switch not working",
+        "one outlet is dead"
+      ]
+    }
+  ],
+  "required_capture": [
+    "name",
+    "address",
+    "callback",
+    "problem",
+    "urgency",
+    "source"
+  ],
+  "never_say": [
+    "price",
+    "estimate_range",
+    "hourly_rate",
+    "arrival_time"
+  ],
+  "fixtures": [
+    "electrical_burning_smell.json",
+    "electrical_sparking_panel.json",
+    "electrical_partial_outage.json",
+    "electrical_outlet_routine.json",
+    "electrical_downed_line.json",
+    "electrical_full_outage.json",
+    "electrical_water_in_panel.json"
+  ]
+}

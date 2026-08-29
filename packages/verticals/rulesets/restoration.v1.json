@@ -1,0 +1,108 @@
+{
+  "trade": "restoration",
+  "version": 1,
+  "effective_from": "2026-08-01",
+  "verified": true,
+  "triggers": [
+    {
+      "code": "ACTIVE_WATER_INTRUSION",
+      "severity": "wake_now",
+      "label": "Water still coming in, wake me",
+      "phrases": [
+        "water is still coming in",
+        "still flooding",
+        "water everywhere",
+        "actively leaking"
+      ]
+    },
+    {
+      "code": "SEWAGE_CONTAMINATION",
+      "severity": "wake_now",
+      "label": "Sewage contamination, wake me",
+      "phrases": [
+        "sewage",
+        "raw sewage",
+        "black water",
+        "contaminated water"
+      ],
+      "safety_script": "advise_do_not_enter"
+    },
+    {
+      "code": "POST_FIRE",
+      "severity": "wake_now",
+      "label": "Fire damage, wake me",
+      "phrases": [
+        "after a fire",
+        "fire damage",
+        "house fire",
+        "smoke damage"
+      ],
+      "safety_script": "advise_do_not_enter"
+    },
+    {
+      "code": "STRUCTURAL_RISK",
+      "severity": "wake_now",
+      "label": "Ceiling or floor looks like it might come down, wake me",
+      "phrases": [
+        "ceiling is sagging",
+        "ceiling might collapse",
+        "floor is buckling"
+      ],
+      "safety_script": "advise_do_not_enter"
+    },
+    {
+      "code": "STANDING_WATER_CONTAINED",
+      "severity": "morning",
+      "label": "Water is stopped but standing, the morning is fine",
+      "phrases": [
+        "standing water",
+        "water has stopped",
+        "wet carpet",
+        "soaked carpet"
+      ]
+    },
+    {
+      "code": "MOLD_DISCOVERED",
+      "severity": "morning",
+      "label": "Mold found, the morning is fine",
+      "phrases": [
+        "mold",
+        "mildew",
+        "black spots on the wall"
+      ]
+    },
+    {
+      "code": "ODOR_COMPLAINT",
+      "severity": "routine",
+      "label": "A smell they want looked at, whenever you get to it",
+      "phrases": [
+        "musty smell",
+        "damp smell",
+        "odor"
+      ]
+    }
+  ],
+  "required_capture": [
+    "name",
+    "address",
+    "callback",
+    "problem",
+    "urgency",
+    "source"
+  ],
+  "never_say": [
+    "price",
+    "estimate_range",
+    "hourly_rate",
+    "arrival_time"
+  ],
+  "fixtures": [
+    "restoration_active_water.json",
+    "restoration_sewage.json",
+    "restoration_standing_water.json",
+    "restoration_mold_morning.json",
+    "restoration_post_fire.json",
+    "restoration_structural_risk.json",
+    "restoration_odor_routine.json"
+  ]
+}
