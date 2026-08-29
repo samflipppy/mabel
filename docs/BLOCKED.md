@@ -23,6 +23,25 @@ Each entry: what's needed, why, and what stays dark until it lands.
 | 13 | Sentry / Axiom / Better Stack | `SENTRY_DSN`, `AXIOM_TOKEN` + dataset, Better Stack heartbeat URL | Errors, structured logs with `call_id` correlation, the 3am pager | Spans are emitted to stdout as structured JSON. Nothing is lost, it just isn't queryable. |
 | 14 | Supabase vault | Vault configured, so `integrations.vault_key` resolves | Integration OAuth tokens are referenced by key and never stored in our tables | Integration connect flows can't complete. We will not fall back to storing a token in `integrations.config`. |
 
+## Gaps found in 01-SCHEMA.sql
+
+Not blocked on an account — blocked on a decision from Sam. Each of these is a
+place where the schema as written does not work, and the fix is already in a
+migration. Say if you would rather it were done another way.
+
+| # | Gap | Where | Fix taken |
+|---|---|---|---|
+| S1 | `users.email` and `contacts.emails` are `citext`, but the extension is never created, so the schema does not apply | `01-SCHEMA.sql` extensions block | `CREATE EXTENSION citext` added to revision 0001 |
+| S2 | `pg_cron` is a superuser extension, so the whole schema fails to apply on a local or CI Postgres | `01-SCHEMA.sql` extensions block | Cron split into revision 0002, so the schema and the isolation tests run anywhere |
+| S3 | The RLS policy casts `current_setting('app.tenant_id', true)::uuid`. Correct when the setting is *unset* (NULL, matches nothing). When it is present and empty, `''::uuid` raises rather than returning NULL, so the query errors instead of failing closed — and an error in that position gets swallowed upstream | RLS block | Wrapped in `nullif(..., '')` in revision 0001, so both absences land on NULL |
+| S4 | **Tenant resolution from the dialed number cannot work as specified.** `tenants` has RLS forced with `id = current_setting('app.tenant_id')`, but the DID lookup happens *before* any tenant context exists — which tenant it is, is the question. The policy matches zero rows, so no inbound call is ever routed | `tenants` policy vs. 03-VOICE.md invariant 3 | `resolve_tenant_by_did()`, a `SECURITY DEFINER` function with a pinned `search_path`, in revision 0003. Returns routing facts only. `mabel_app` gets EXECUTE and nothing more, so the blast radius is one lookup rather than a BYPASSRLS connection held by the media process |
+
+S4 is the one worth a second opinion. The alternatives were connecting as
+`mabel_admin` (AGENTS.md forbids application code using it, and it would hand
+the media process unrestricted read of every tenant) or a separate un-scoped
+DID directory table (a second source of truth for a phone number, kept in step
+by trigger). The function keeps the surface to a single fixed query.
+
 ## Rules this file exists to enforce
 
 - **Never invent or stub a credential.** Not in a file, not in `.env.example`,

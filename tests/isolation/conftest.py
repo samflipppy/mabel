@@ -63,18 +63,28 @@ def _test_database_url() -> str | None:
     return url
 
 
-def _load_sql() -> str:
-    """The DDL from revision 0001, as SQL. We execute it directly rather than
-    driving Alembic, so the test schema is unambiguously this one revision and
-    nothing carries over between runs."""
+def _module(path: Path):
     import importlib.util
 
-    path = MIGRATIONS / "0001_v2_schema.py"
     spec = importlib.util.spec_from_file_location(path.stem, path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return "\n".join(module.SECTIONS)
+    return module
+
+
+def _load_sql() -> str:
+    """The DDL these tests need, as SQL. Executed directly rather than through
+    Alembic, so the test schema is unambiguously these revisions and nothing
+    carries over between runs.
+
+    0002 is skipped: it is pg_cron, which a scratch Postgres does not have and
+    which none of these tests exercise. 0003 is included, because it carries
+    the DID resolution function, without which no call can be routed at all.
+    """
+    core = _module(MIGRATIONS / "0001_v2_schema.py")
+    did = _module(MIGRATIONS / "0003_did_resolution.py")
+    return "\n".join(core.SECTIONS) + "\n" + did.FUNCTION
 
 
 def pytest_collection_modifyitems(config, items):
