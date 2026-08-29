@@ -12,7 +12,7 @@ from mabel_db.tenant import tenant_scope
 from mabel_media.postcall import CallOutcome, finalize
 from sqlalchemy import text
 
-from tests.e2e.conftest import auth_header
+from tests.e2e.fakes import auth_header
 
 pytestmark = pytest.mark.asyncio
 

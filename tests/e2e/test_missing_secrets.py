@@ -75,7 +75,11 @@ async def test_missing_telnyx_or_xai_refuses_after_tenant_would_resolve(monkeypa
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
     body = inbound_payload()
-    decision = await accept_inbound_call(body, sign_xai(body), engine=None)
+    from tests.e2e.fakes import NOW
+
+    decision = await accept_inbound_call(
+        body, sign_xai(body, at=NOW), engine=None, now=NOW
+    )
     assert decision.status_code == 503
     assert decision.handed_off is False
     assert decision.body["joined"] is False

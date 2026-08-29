@@ -13,7 +13,7 @@ from uuid import UUID
 from mabel_media.session import IncomingCall
 from mabel_xai.webhooks import signed_payload
 
-XAI_WEBHOOK_SECRET = "whsec_dGVzdC1zaWduaW5nLXNlY3JldC1ub3QtcmVhbA"
+XAI_WEBHOOK_SECRET = "whsec_" + base64.b64encode(b"a-test-signing-secret-not-real").decode()
 NOW = 1_800_000_000.0
 
 
@@ -44,10 +44,10 @@ def sign_xai(
     body: bytes,
     *,
     webhook_id: str = "msg_e2e_1",
-    at: float = NOW,
+    at: float | None = None,
     secret: str = XAI_WEBHOOK_SECRET,
 ) -> dict[str, str]:
-    timestamp = str(int(at))
+    timestamp = str(int(time.time() if at is None else at))
     key = base64.b64decode(secret[len("whsec_") :])
     digest = hmac.new(key, signed_payload(webhook_id, timestamp, body), hashlib.sha256).digest()
     return {
@@ -117,6 +117,10 @@ def telnyx_sms_body(*, event_id: str, from_number: str, text: str) -> bytes:
         },
         separators=(",", ":"),
     ).encode()
+
+
+def auth_header(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
 
 
 def token_for(tenant_id: UUID, call_id: str = "call_e2e"):

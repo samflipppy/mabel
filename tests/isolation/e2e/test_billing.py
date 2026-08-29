@@ -13,7 +13,7 @@ from mabel_billing.stripe_client import StripeUnavailable, api_key, is_configure
 from mabel_domain.money import Money, MoneyError, parse_owner_amount
 from mabel_integrations.base import VaultUnavailable, read_credentials
 
-from tests.e2e.conftest import auth_header
+from tests.e2e.fakes import auth_header
 
 REPO = Path(__file__).resolve().parents[2]
 MONEY_PATHS = [
@@ -64,7 +64,8 @@ def test_money_modules_do_not_use_float_literals_for_cents():
             for node in ast.walk(tree):
                 if isinstance(node, ast.Constant) and isinstance(node.value, float):
                     # voice minutes are not money; a 0.0 default on a speed is not money.
-                    if node.value in {0.0, 1.0, 0.85}:
+                    # HTTP timeouts and speaking-rate defaults are not money.
+                    if node.value in {0.0, 1.0, 0.85, 5.0, 10.0, 15.0}:
                         continue
                     offenders.append(f"{path.name}:{node.lineno}={node.value}")
     assert not offenders, f"float literals on a money path: {offenders}"

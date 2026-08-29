@@ -147,7 +147,11 @@ def _split(sql: str) -> list[str]:
             del token
             in_dollar = not in_dollar
         buffer.append(line)
-        if not in_dollar and stripped.endswith(";"):
+        # A trailing `-- comment` after the semicolon is common in the
+        # schema (pg_trgm). Without stripping it, the splitter never
+        # flushes and two statements become one prepared command.
+        code = stripped.split("--", 1)[0].rstrip()
+        if not in_dollar and code.endswith(";"):
             statement = "\n".join(buffer).strip()
             if statement:
                 statements.append(statement)
