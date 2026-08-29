@@ -56,7 +56,19 @@ jobs:
         run: uv run pyright
 
       - name: pytest tests/unit
-        run: uv run pytest tests/unit -q
+        # -ra so an all-skipped run is visible rather than a quiet green.
+        run: uv run pytest tests/unit -q -ra
+
+      - name: the unit suite must not have skipped wholesale
+        # A conftest collection hook without a path filter skips every test in
+        # the repo, and 500 skipped tests exit 0 and look like a pass.
+        run: |
+          uv run pytest tests/unit -q --collect-only 2>&1 | tail -1
+          uv run pytest tests/unit -q -ra 2>&1 | tee /tmp/unit.txt
+          if grep -qE "^[0-9]+ skipped" /tmp/unit.txt; then
+            echo "::error::every unit test skipped. Check conftest collection hooks."
+            exit 1
+          fi
 
       - name: pytest tests/golden
         run: uv run pytest tests/golden -q
