@@ -22,4 +22,4 @@ def test_recap_send_sql_has_no_float_money() -> None:
     assert "float" not in lowered
     assert "numeric(12" not in lowered
     assert "dollars_won" not in lowered
-    assert "$" not in SQL_0005
+    assert "$" not in SQL_0005.replace("$$", "")

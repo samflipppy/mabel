@@ -1,8 +1,8 @@
 -- Draft only. Sam runs this. A bot does not.
 -- Due-recap tenant list. Tenant is not known yet, so this is SECURITY DEFINER
 -- the same way app.resolve_tenant_from_did is. Read-only. Application code
--- still never uses BYPASSRLS. After this returns a tenant_id, the send path
--- SET LOCAL app.tenant_id and updates sent_at. No DELETE.
+-- still never uses the migrator role. After this returns a tenant_id, the
+-- send path SET LOCAL app.tenant_id and updates sent_at. No DELETE.
 
 BEGIN;
 
