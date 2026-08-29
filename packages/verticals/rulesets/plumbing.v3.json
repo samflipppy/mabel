@@ -1,0 +1,133 @@
+{
+  "trade": "plumbing",
+  "version": 3,
+  "effective_from": "2026-08-01",
+  "verified": true,
+  "triggers": [
+    {
+      "code": "ACTIVE_FLOODING",
+      "severity": "wake_now",
+      "label": "Water actively coming in or flooding, wake me",
+      "phrases": [
+        "water everywhere",
+        "flooding",
+        "flooded",
+        "pouring",
+        "water coming in",
+        "gushing",
+        "ceiling is pouring"
+      ],
+      "safety_script": "advise_shut_off_water"
+    },
+    {
+      "code": "BURST_PIPE",
+      "severity": "wake_now",
+      "label": "Burst or broken pipe, wake me",
+      "phrases": [
+        "pipe burst",
+        "burst pipe",
+        "pipe broke",
+        "broken pipe",
+        "pipe is broken",
+        "pipe split",
+        "pipe let go"
+      ],
+      "safety_script": "advise_shut_off_water"
+    },
+    {
+      "code": "SEWAGE_BACKUP",
+      "severity": "wake_now",
+      "label": "Sewage backing up into the house, wake me",
+      "phrases": [
+        "sewage",
+        "raw sewage",
+        "sewer backup",
+        "backing up",
+        "toilet backing up",
+        "waste coming up"
+      ]
+    },
+    {
+      "code": "NO_WATER",
+      "severity": "wake_now",
+      "label": "No water to the whole house, wake me",
+      "phrases": [
+        "no water at all",
+        "no water anywhere",
+        "whole house",
+        "no water in the house",
+        "main water is out"
+      ]
+    },
+    {
+      "code": "WATER_NEAR_ELECTRICAL",
+      "severity": "wake_now",
+      "label": "Water near the electrical panel, wake me and tell them to get out",
+      "phrases": [
+        "near the panel",
+        "water and sparks",
+        "water near electrical",
+        "water in the breaker",
+        "water on the outlet"
+      ],
+      "safety_script": "advise_leave_and_call_911"
+    },
+    {
+      "code": "WATER_HEATER_LEAK",
+      "severity": "morning",
+      "label": "Water heater leaking, the morning is fine",
+      "phrases": [
+        "water heater leaking",
+        "water heater is leaking",
+        "hot water tank leaking"
+      ]
+    },
+    {
+      "code": "NO_HOT_WATER",
+      "severity": "morning",
+      "label": "No hot water, the morning is fine",
+      "phrases": [
+        "no hot water",
+        "cold showers",
+        "water heater is out"
+      ]
+    },
+    {
+      "code": "SLOW_DRAIN",
+      "severity": "routine",
+      "label": "Slow or clogged drain, whenever you get to it",
+      "phrases": [
+        "slow drain",
+        "clogged",
+        "draining slowly",
+        "backed up sink"
+      ]
+    }
+  ],
+  "required_capture": [
+    "name",
+    "address",
+    "callback",
+    "problem",
+    "urgency",
+    "source"
+  ],
+  "never_say": [
+    "price",
+    "estimate_range",
+    "hourly_rate",
+    "arrival_time"
+  ],
+  "fixtures": [
+    "plumbing_burst_pipe.json",
+    "plumbing_slow_drain_2am.json",
+    "plumbing_sewage_backup.json",
+    "plumbing_water_near_panel.json",
+    "plumbing_no_hot_water.json",
+    "plumbing_active_flooding_model_missed.json",
+    "plumbing_override_water_heater_wakes_me.json",
+    "plumbing_override_sewage_muted.json",
+    "plumbing_no_water_whole_house.json",
+    "plumbing_water_heater_leak_default.json"
+  ]
+}

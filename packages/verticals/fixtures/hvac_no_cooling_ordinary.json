@@ -1,11 +1,11 @@
 {
-  "id": "hvac_no_heat_freezing",
+  "id": "hvac_no_cooling_ordinary",
   "trade": "hvac",
   "rule_version": 2,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "We have no heat and it's ten degrees out."
+      "The AC is out upstairs, it's warm but bearable."
     ],
     "captured": {
       "name": "Pat Example",
@@ -16,17 +16,15 @@
       "source": "google"
     },
     "context": {
-      "outdoor_temp_f": 10
+      "outdoor_temp_f": 78
     }
   },
   "expect": {
-    "trigger": "NO_HEAT_FREEZING",
-    "severity": "wake_now",
-    "escalate": true,
-    "notify": "now",
-    "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
-  },
-  "model_code": "NO_HEAT_FREEZING"
+    "trigger": "NO_COOLING",
+    "severity": "morning",
+    "escalate": false,
+    "notify": "recap_7am",
+    "urgency": "soon",
+    "capture_gaps": []
+  }
 }

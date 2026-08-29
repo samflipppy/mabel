@@ -1,0 +1,29 @@
+{
+  "id": "locksmith_safe_lockout_worded_as_locked_out",
+  "trade": "locksmith",
+  "rule_version": 1,
+  "input": {
+    "called_at": "2026-01-15T23:12:00-05:00",
+    "utterances": [
+      "We're locked out of the safe at the shop, no rush tonight."
+    ],
+    "captured": {
+      "name": "Pat Example",
+      "address": "100 Example Ave, Lakewood OH 44107",
+      "callback": "+12165550100",
+      "problem": "see utterances",
+      "urgency": "as described",
+      "source": "google"
+    },
+    "context": {}
+  },
+  "expect": {
+    "trigger": "LOCKED_OUT",
+    "severity": "wake_now",
+    "escalate": true,
+    "notify": "now",
+    "urgency": "emergency",
+    "capture_gaps": []
+  },
+  "note": "A known sharp edge, pinned here rather than left to be discovered. 'Locked out of the safe' contains 'locked out', and the backstop takes the most severe match, so a safe lockout reads as a house lockout and wakes somebody. The model is the primary path and would say SAFE_LOCKOUT; the backstop is deliberately biased towards escalating. Over-calling here costs a phone call. Under-calling a real lockout at 1am costs the customer."
+}

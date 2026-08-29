@@ -1,11 +1,11 @@
 {
-  "id": "hvac_no_heat_freezing",
-  "trade": "hvac",
-  "rule_version": 2,
+  "id": "towing_stranded_vulnerable",
+  "trade": "towing",
+  "rule_version": 1,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "We have no heat and it's ten degrees out."
+      "I'm broken down with my two kids in the back."
     ],
     "captured": {
       "name": "Pat Example",
@@ -16,17 +16,15 @@
       "source": "google"
     },
     "context": {
-      "outdoor_temp_f": 10
+      "vulnerable_occupant": true
     }
   },
   "expect": {
-    "trigger": "NO_HEAT_FREEZING",
+    "trigger": "STRANDED_VULNERABLE",
     "severity": "wake_now",
     "escalate": true,
     "notify": "now",
     "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
-  },
-  "model_code": "NO_HEAT_FREEZING"
+    "capture_gaps": []
+  }
 }

@@ -45,9 +45,7 @@ SKIP_REASON = (
 # A scratch database is one we are allowed to create and drop tables in. If the
 # URL looks like it could be a real one, we stop. The cost of being wrong here
 # is somebody's call history.
-PRODUCTION_SHAPED = re.compile(
-    r"(prod|production|supabase\.co|\.fly\.dev|amazonaws\.com)", re.I
-)
+PRODUCTION_SHAPED = re.compile(r"(prod|production|supabase\.co|\.fly\.dev|amazonaws\.com)", re.I)
 
 
 def _test_database_url() -> str | None:
@@ -190,9 +188,7 @@ async def two_tenants(engine: AsyncEngine) -> AsyncIterator[tuple[UUID, UUID]]:
     yield alpha, beta
 
     async with engine.begin() as conn:
-        await conn.execute(
-            text("DELETE FROM tenants WHERE id = ANY(:ids)"), {"ids": [alpha, beta]}
-        )
+        await conn.execute(text("DELETE FROM tenants WHERE id = ANY(:ids)"), {"ids": [alpha, beta]})
 
 
 async def rows_visible(conn: AsyncConnection, table: str) -> int:

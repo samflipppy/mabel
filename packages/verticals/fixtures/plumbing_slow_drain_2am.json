@@ -1,26 +1,31 @@
 {
   "id": "plumbing_slow_drain_2am",
-  "vertical": "plumbing",
+  "trade": "plumbing",
   "rule_version": 3,
   "input": {
-    "called_at": "2026-01-16T02:14:00-05:00",
+    "called_at": "2026-01-16T02:04:00-05:00",
     "utterances": [
-      "The kitchen sink is draining slow. Can someone look at it tomorrow?"
+      "My kitchen sink has a slow drain, it's been getting worse."
     ],
     "captured": {
-      "name": "Riley Example",
-      "address": "200 Example St, Lakewood OH 44107",
-      "callback": "+12165550101",
-      "problem": "slow kitchen drain",
-      "urgency": "not urgent, can wait until morning",
+      "name": "Pat Example",
+      "address": "100 Example Ave, Lakewood OH 44107",
+      "callback": "+12165550100",
+      "problem": "see utterances",
+      "urgency": "as described",
       "source": ""
     },
     "context": {}
   },
   "expect": {
-    "trigger": null,
+    "trigger": "SLOW_DRAIN",
+    "severity": "routine",
     "escalate": false,
     "notify": "recap_7am",
-    "capture_gaps": ["source"]
-  }
+    "urgency": "routine",
+    "capture_gaps": [
+      "source"
+    ]
+  },
+  "note": "2am and still not an emergency. Escalating this is the over_escalated QA flag: waking a contractor at 2am for a slow drain is how he cancels."
 }

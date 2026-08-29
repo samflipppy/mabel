@@ -1,11 +1,11 @@
 {
-  "id": "hvac_no_heat_freezing",
+  "id": "hvac_no_heat_mild",
   "trade": "hvac",
   "rule_version": 2,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "We have no heat and it's ten degrees out."
+      "The furnace is out. It's not cold out, but we'd like it looked at."
     ],
     "captured": {
       "name": "Pat Example",
@@ -16,17 +16,16 @@
       "source": "google"
     },
     "context": {
-      "outdoor_temp_f": 10
+      "outdoor_temp_f": 55
     }
   },
   "expect": {
-    "trigger": "NO_HEAT_FREEZING",
-    "severity": "wake_now",
-    "escalate": true,
-    "notify": "now",
-    "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
+    "trigger": "NO_HEAT",
+    "severity": "morning",
+    "escalate": false,
+    "notify": "recap_7am",
+    "urgency": "soon",
+    "capture_gaps": []
   },
-  "model_code": "NO_HEAT_FREEZING"
+  "note": "Same words as the 3am call, different weather, different answer. This is why `require` exists."
 }

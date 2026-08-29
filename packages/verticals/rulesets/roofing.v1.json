@@ -1,0 +1,93 @@
+{
+  "trade": "roofing",
+  "version": 1,
+  "effective_from": "2026-08-01",
+  "verified": true,
+  "triggers": [
+    {
+      "code": "ACTIVE_LEAK_INTERIOR",
+      "severity": "wake_now",
+      "label": "Roof leaking into the house right now, wake me",
+      "phrases": [
+        "leaking into the house",
+        "water coming through the ceiling",
+        "dripping through the ceiling",
+        "roof is leaking"
+      ]
+    },
+    {
+      "code": "STORM_DAMAGE_OPEN",
+      "severity": "wake_now",
+      "label": "Roof opened up by a storm, wake me",
+      "phrases": [
+        "roof came off",
+        "hole in the roof",
+        "roof is open",
+        "blew the roof"
+      ]
+    },
+    {
+      "code": "TREE_ON_ROOF",
+      "severity": "wake_now",
+      "label": "Tree down on the roof, wake me",
+      "phrases": [
+        "tree on the roof",
+        "tree fell on the house",
+        "tree through the roof"
+      ],
+      "safety_script": "advise_do_not_enter"
+    },
+    {
+      "code": "MISSING_SHINGLES",
+      "severity": "morning",
+      "label": "Shingles missing after weather, the morning is fine",
+      "phrases": [
+        "missing shingles",
+        "shingles came off",
+        "lost some shingles"
+      ]
+    },
+    {
+      "code": "LEAK_STAIN_NO_ACTIVE",
+      "severity": "morning",
+      "label": "A stain on the ceiling with nothing actively dripping, the morning is fine",
+      "phrases": [
+        "water stain",
+        "stain on the ceiling",
+        "brown spot on the ceiling"
+      ]
+    },
+    {
+      "code": "GUTTER_ISSUE",
+      "severity": "routine",
+      "label": "Gutter trouble, whenever you get to it",
+      "phrases": [
+        "gutter",
+        "downspout",
+        "gutters overflowing"
+      ]
+    }
+  ],
+  "required_capture": [
+    "name",
+    "address",
+    "callback",
+    "problem",
+    "urgency",
+    "source"
+  ],
+  "never_say": [
+    "price",
+    "estimate_range",
+    "hourly_rate",
+    "arrival_time"
+  ],
+  "fixtures": [
+    "roofing_active_leak.json",
+    "roofing_tree_on_roof.json",
+    "roofing_missing_shingles.json",
+    "roofing_gutter_routine.json",
+    "roofing_storm_damage_open.json",
+    "roofing_stain_no_active_leak.json"
+  ]
+}

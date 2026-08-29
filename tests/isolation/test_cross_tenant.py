@@ -123,10 +123,7 @@ class TestReadIsolation:
         alpha, _beta = two_tenants
         async with tenant_scope(alpha, engine=app_engine) as conn:
             result = await conn.execute(
-                text(
-                    "SELECT count(*) FROM leads l "
-                    "JOIN contacts c ON c.tenant_id <> l.tenant_id"
-                )
+                text("SELECT count(*) FROM leads l JOIN contacts c ON c.tenant_id <> l.tenant_id")
             )
             assert result.scalar_one() == 0
 
@@ -152,9 +149,7 @@ class TestWriteIsolation:
         alpha, beta = two_tenants
         with pytest.raises(DBAPIError) as exc:
             async with tenant_scope(alpha, engine=app_engine) as conn:
-                await conn.execute(
-                    text("UPDATE leads SET tenant_id = :other"), {"other": beta}
-                )
+                await conn.execute(text("UPDATE leads SET tenant_id = :other"), {"other": beta})
         assert "row-level security" in str(exc.value).lower()
 
     async def test_an_update_without_a_where_clause_touches_only_our_rows(
