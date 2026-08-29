@@ -206,6 +206,25 @@ class TestTelnyxFailsClosed:
         with pytest.raises(TelnyxRefusedUnderTest, match="wake somebody up"):
             TelnyxClient()
 
+    def test_build_client_returns_none_when_the_key_is_missing(self, monkeypatch):
+        """Unconfigured is failed-because-unconfigured, not a raised job."""
+        monkeypatch.delenv("TELNYX_API_KEY", raising=False)
+        from mabel_worker.jobs.send_notification import build_client
+
+        assert build_client() is None
+
+    def test_build_client_returns_none_under_pytest(self, monkeypatch):
+        """The construction guard must not kill the send job.
+
+        TelnyxClient raises TelnyxRefusedUnderTest under pytest even when a
+        key is present. If build_client lets that escape, the worker records
+        a dead job instead of marking each notification failed-unconfigured.
+        """
+        monkeypatch.setenv("TELNYX_API_KEY", "would-not-be-used")
+        from mabel_worker.jobs.send_notification import build_client
+
+        assert build_client() is None
+
     def test_delivery_risk_names_the_dangerous_state(self, monkeypatch):
         """`unregistered` is the one that matters: the API accepts the message,
         returns an id, and carriers drop it. Everything looks healthy and the

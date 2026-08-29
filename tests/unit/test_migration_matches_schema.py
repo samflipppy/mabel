@@ -257,6 +257,27 @@ class TestRowLevelSecurity:
         assert "mabel_app nologin bypassrls" not in normalised
         assert "mabel_admin nologin bypassrls" in normalised
 
+    def test_schema_usage_is_granted_to_the_app_role(self):
+        """Table grants without schema USAGE look like missing tables.
+
+        A brand-new database hides this because PUBLIC already has USAGE on
+        `public`. Recreating the schema — which the isolation suite does —
+        does not, and mabel_app then cannot see a table it was granted.
+        """
+        assert "grant usage on schema public to mabel_app" in _normalise(MIGRATION_SQL)
+
+    def test_admin_can_read_the_tables_definer_functions_use(self):
+        """BYPASSRLS is not a privilege grant.
+
+        The SECURITY DEFINER resolution functions are owned by mabel_admin.
+        Without schema USAGE and SELECT on the tables they read, every
+        inbound DID / SMS / portal / Stripe lookup fails with "relation
+        tenants does not exist".
+        """
+        normalised = _normalise(MIGRATION_SQL)
+        assert "grant usage on schema public to mabel_admin" in normalised
+        assert "grant select on tenants, locations, users to mabel_admin" in normalised
+
 
 class TestMoneyColumns:
     """Invariant 5: money is integer cents in BIGINT, with a currency column.

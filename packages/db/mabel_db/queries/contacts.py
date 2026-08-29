@@ -143,7 +143,10 @@ async def resolve_or_create(
 async def touch(conn: AsyncConnection, contact_id: UUID, *, now: datetime | None = None) -> None:
     """Record that we heard from them. Drives 'last seen' in the portal."""
     await conn.execute(
-        text("UPDATE contacts SET last_seen_at = coalesce(:now, now()) WHERE id = :id"),
+        text(
+            "UPDATE contacts SET last_seen_at = coalesce(CAST(:now AS timestamptz), now()) "
+            "WHERE id = :id"
+        ),
         {"id": contact_id, "now": now},
     )
 

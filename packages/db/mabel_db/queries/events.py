@@ -49,7 +49,7 @@ async def append(
                body, payload, storage_path, actor_user_id)
             VALUES
               (:tenant_id, :contact_id, :lead_id, :kind, :direction,
-               coalesce(:occurred_at, now()), :body, cast(:payload as jsonb),
+               coalesce(cast(:occurred_at as timestamptz), now()), :body, cast(:payload as jsonb),
                :storage_path, :actor_user_id)
             RETURNING id
             """
