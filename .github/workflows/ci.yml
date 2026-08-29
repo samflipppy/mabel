@@ -1,0 +1,101 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+
+    # The isolation suite is never skipped. It asserts that Postgres refuses
+    # cross-tenant reads, and there is no way to check that without a Postgres.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: mabel_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # A scratch database in a throwaway container. No production URL is ever
+      # available to CI, and the conftest refuses anything production-shaped.
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/mabel_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --all-packages --dev
+
+      - name: ruff check
+        run: uv run ruff check .
+
+      - name: ruff format --check
+        run: uv run ruff format --check .
+
+      - name: pyright
+        run: uv run pyright
+
+      - name: pytest tests/unit
+        run: uv run pytest tests/unit -q
+
+      - name: pytest tests/golden
+        run: uv run pytest tests/golden -q
+
+      - name: pytest tests/property
+        run: uv run pytest tests/property -q
+
+      - name: pytest tests/isolation
+        run: uv run pytest tests/isolation -q
+
+      - name: the isolation suite must not have skipped
+        # A skip here means the database was missing and the cross-tenant
+        # guarantees went unchecked. That is a failure, not a pass.
+        run: |
+          uv run pytest tests/isolation -q --no-header -rs 2>&1 | tee /tmp/isolation.txt
+          if grep -qE "[0-9]+ skipped" /tmp/isolation.txt; then
+            echo "::error::tests/isolation skipped. RLS was not verified."
+            exit 1
+          fi
+
+      - name: alembic upgrade head --sql
+        # Dry run only. Migrations are never applied from CI, and never by an
+        # agent. This renders the DDL and proves the revision chain resolves.
+        working-directory: packages/db
+        run: uv run alembic upgrade head --sql > /dev/null
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck --if-present
+      - run: npm run lint --if-present
+      - run: npm run build

@@ -7,7 +7,14 @@ import sys
 from typing import Any
 
 from mabel_verticals.evaluate import evaluate_scenario
-from mabel_verticals.load import iter_fixtures, iter_rule_files, load_fixture, load_json, load_rules, validate_rules
+from mabel_verticals.load import (
+    iter_fixtures,
+    iter_rule_files,
+    load_fixture,
+    load_json,
+    load_rules,
+    validate_rules,
+)
 
 
 def run_fixture(fixture: dict[str, Any]) -> dict[str, Any]:

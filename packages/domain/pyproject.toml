@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mabel-domain"
+version = "2.0.0"
+description = "Mabel domain models. Pure: no I/O, no DB, no network."
+requires-python = ">=3.12"
+dependencies = [
+  "pydantic>=2.9",
+  # Invariant 6 computes tenant-local time from an IANA zone. Windows ships no
+  # tz database at all, and a slim container may not either. Without this the
+  # zone lookup raises and "after hours" stops being answerable.
+  "tzdata>=2024.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["mabel_domain*"]
