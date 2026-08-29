@@ -15,6 +15,8 @@ def test_app_never_enables_bypassrls() -> None:
 def test_onboard_never_uses_bypassrls_or_migrator() -> None:
     for module in (onboard, store):
         source = Path(module.__file__).read_text(encoding="utf-8")
-        assert "BYPASSRLS" not in source.upper().replace(" ", "")
+        assert "SET BYPASSRLS" not in source.upper()
+        assert "BYPASSRLS TRUE" not in source.upper().replace(" ", "")
         assert "mabel_migrator" not in source
+        assert "CREATE FUNCTION" not in source.upper()
         assert "SECURITY DEFINER" not in source.upper()

@@ -25,9 +25,10 @@ def test_rls_with_check_lets_insert_under_set_local() -> None:
 
 
 def test_no_security_definer_write_function() -> None:
-    # resolve_tenant_from_did is the only SECURITY DEFINER. Insert uses SET LOCAL.
-    assert SQL_0001.count("SECURITY DEFINER") == 1
+    # resolve_tenant_from_did is the only function. Insert uses SET LOCAL.
+    assert SQL_0001.count("CREATE FUNCTION") == 1
     assert "resolve_tenant_from_did" in SQL_0001
+    assert "CREATE FUNCTION" not in SQL_0002
     assert "SECURITY DEFINER" not in SQL_0002
     assert "BYPASSRLS" not in SQL_0002
     assert "CREATE ROLE mabel_app LOGIN NOSUPERUSER NOBYPASSRLS" in SQL_0001

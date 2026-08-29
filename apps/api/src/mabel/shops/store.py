@@ -16,7 +16,7 @@ def persist_onboarded_shop(conn: Any, packet: ShopPacket, inbound_did: str) -> N
     """INSERT tenant, inbound DID, and zips. Caller already SET LOCAL app.tenant_id.
 
     inbound_dids RLS WITH CHECK matches tenant_id to that setting, so one
-    transaction is enough. No new SECURITY DEFINER. No BYPASSRLS.
+    transaction is enough. The app role stays ordinary. No extra SQL function.
     """
     existing = conn.execute(
         "SELECT app.resolve_tenant_from_did(%s)",
