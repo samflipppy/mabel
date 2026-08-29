@@ -10,6 +10,9 @@ dependencies = [
   "mabel-xai",
   "mabel-mcp",
   "mabel-media",
+  "mabel-sms",
+  "mabel-telnyx",
+  "mabel-worker",
 ]
 
 [dependency-groups]
@@ -30,6 +33,9 @@ mabel-db = { workspace = true }
 mabel-xai = { workspace = true }
 mabel-mcp = { workspace = true }
 mabel-media = { workspace = true }
+mabel-sms = { workspace = true }
+mabel-telnyx = { workspace = true }
+mabel-worker = { workspace = true }
 
 [tool.ruff]
 line-length = 100
