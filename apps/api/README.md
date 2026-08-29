@@ -9,7 +9,7 @@ If Telnyx or xAI keys are missing, the webhook fails closed.
 
 ```
 src/mabel/
-  voice/       # webhook, DID, pinned voice model
+  voice/       # webhook, DID, pinned voice model, per-shop agent stub
   mcp/         # eight tools, tenant from the token
   shops/       # packet, onboard write path, POST /shops (admin, not MCP)
   leads/
@@ -42,3 +42,5 @@ Names only. Never put Telnyx, xAI, Jobber, or Stripe keys in a file, an env exam
 - `TELNYX_FROM_E164` — Mabel's From number for owner texts. Never the caller's callback. 10DLC: nothing goes to a real number until the campaign clears.
 
 Voice model is pinned in code to `grok-voice-think-fast-2.0`. Not an env var. Never `grok-voice-latest`.
+
+Each shop gets its own xAI Voice Agent from our template (she is Mabel, disclosure, never quote, never invent arrival, no clone, no `web_search`/`x_search`, eight tools). We do not click Customer Support. `xai_voice_agent_id` on the tenant is optional/null until we have it. This service does not call xAI to create the agent. Collections may hold non-price docs; dollar-looking uploads are rejected the same way as greeting notes.

@@ -29,9 +29,10 @@ def persist_onboarded_shop(conn: Any, packet: ShopPacket, inbound_did: str) -> N
         """
         INSERT INTO tenants (
             id, name, vertical, status, timezone, owner_sms_e164,
-            after_hours_start, after_hours_end, greeting_notes
+            after_hours_start, after_hours_end, greeting_notes,
+            xai_voice_agent_id
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """,
         (
             str(packet.tenant_id),
@@ -43,6 +44,7 @@ def persist_onboarded_shop(conn: Any, packet: ShopPacket, inbound_did: str) -> N
             packet.after_hours_start,
             packet.after_hours_end,
             packet.greeting_notes,
+            packet.xai_voice_agent_id,
         ),
     )
     try:
@@ -70,7 +72,8 @@ def fetch_shop_packet(conn: Any, tenant_id: UUID) -> ShopPacket:
     row = conn.execute(
         """
         SELECT id, name, vertical, timezone, owner_sms_e164,
-               after_hours_start, after_hours_end, greeting_notes
+               after_hours_start, after_hours_end, greeting_notes,
+               xai_voice_agent_id
         FROM tenants
         WHERE id = %s
         """,
@@ -83,6 +86,8 @@ def fetch_shop_packet(conn: Any, tenant_id: UUID) -> ShopPacket:
     owner_sms = row[4]
     if owner_sms is None or not str(owner_sms).strip():
         raise PacketError("Mabel has no shop packet for this tenant.")
+    agent_raw = row[8] if len(row) > 8 else None
+    agent_id = None if agent_raw is None else str(agent_raw).strip() or None
     return ShopPacket(
         tenant_id=UUID(str(row[0])),
         name=str(row[1]),
@@ -93,6 +98,7 @@ def fetch_shop_packet(conn: Any, tenant_id: UUID) -> ShopPacket:
         after_hours_end=_as_time(row[6], time(8, 0)),
         service_area_zips=zips,
         greeting_notes=None if row[7] is None else str(row[7]),
+        xai_voice_agent_id=agent_id,
     )
 
 

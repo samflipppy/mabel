@@ -34,3 +34,21 @@ def test_repo_does_not_commit_dotenv_or_key_files() -> None:
         if path.suffix in {".pem", ".key"}:
             hits.append(str(path.relative_to(REPO_ROOT)))
     assert hits == []
+
+
+def test_ci_workflow_has_no_secrets_or_deploy() -> None:
+    workflow = REPO_ROOT / ".github" / "workflows" / "test.yml"
+    assert workflow.is_file()
+    text = workflow.read_text(encoding="utf-8")
+    lowered = text.lower()
+    assert "secrets" not in lowered
+    assert "deploy" not in lowered
+    assert "TELNYX" not in text
+    assert "XAI_API_KEY" not in text
+    assert "JOBBER" not in text
+    assert "STRIPE" not in text
+    assert "python-version: \"3.12\"" in text or "python-version: '3.12'" in text
+    assert "packages/verticals" in text
+    assert "apps/api[dev]" in text
+    assert "pytest" in lowered
+    assert "ruff" in lowered

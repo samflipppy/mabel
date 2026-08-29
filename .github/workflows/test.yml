@@ -1,0 +1,41 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            packages/verticals/pyproject.toml
+            apps/api/pyproject.toml
+
+      - name: Install packages/verticals then apps/api[dev]
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e packages/verticals
+          python -m pip install -e "apps/api[dev]"
+
+      - name: pytest packages/verticals
+        working-directory: packages/verticals
+        run: python -m pytest
+
+      - name: pytest apps/api
+        working-directory: apps/api
+        run: python -m pytest
+
+      - name: ruff apps/api
+        working-directory: apps/api
+        run: python -m ruff check src tests

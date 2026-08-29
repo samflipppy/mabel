@@ -120,12 +120,14 @@ def test_postgres_directory_uses_resolve_function_then_tenant_scope() -> None:
     assert "app.resolve_tenant_from_did" in joined
     assert f"SET LOCAL app.tenant_id = '{tenant_id}'" in joined
     assert "FROM tenants" in joined
+    assert "xai_voice_agent_id" in joined
     assert "FROM service_area_zips" in joined
     assert tenant.id == tenant_id
     assert tenant.vertical == "plumbing"
     assert tenant.packet is not None
     assert tenant.packet.service_area_zips == ("44107",)
     assert tenant.packet.greeting_notes == "Ask how the dog is."
+    assert tenant.packet.xai_voice_agent_id is None
     assert conn.committed is True
 
 
@@ -153,3 +155,23 @@ def test_fetch_shop_packet_rejects_dollar_greeting_notes() -> None:
     )
     with pytest.raises(PacketError, match="dollar"):
         fetch_shop_packet(conn, tenant_id)
+
+
+def test_fetch_shop_packet_reads_optional_xai_voice_agent_id() -> None:
+    tenant_id = uuid4()
+    conn = ScriptedConn(
+        tenant_row=(
+            tenant_id,
+            "Example Plumbing",
+            "plumbing",
+            "America/New_York",
+            "+12165550199",
+            time(17, 0),
+            time(8, 0),
+            None,
+            "agent_example",
+        ),
+        zip_rows=[("44107",)],
+    )
+    packet = fetch_shop_packet(conn, tenant_id)
+    assert packet.xai_voice_agent_id == "agent_example"

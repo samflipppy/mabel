@@ -48,6 +48,8 @@ def test_voice_docs_pin_and_do_not_join() -> None:
     assert "get_job_history" in text
     assert "log_note" in text
     assert "This repo still does not open" in text
-    assert "ONE xAI Voice Agent" in text
+    assert "own xAI Voice Agent" in text
+    assert "ONE xAI Voice Agent" not in text
+    assert "Customer Support" in text
     assert "sk-" not in text
     assert "whsec_" not in text

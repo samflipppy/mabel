@@ -40,16 +40,22 @@ Pin `grok-voice-think-fast-2.0`. Never `grok-voice-latest`. That alias moved ver
 
 ## Architecture (locked 2026-08-29)
 
-ONE xAI Voice Agent for Mabel, not one agent per client. Shop facts live in our database and are injected after tenant resolution from the inbound DID. Do not onboard shops by uploading docs into xAI Voice Agent collections — she would quote prices from PDFs. Splitting to per-shop xAI agents later is possible because facts stay in our DB.
+Each client gets their own xAI Voice Agent in console.x.ai. Reason: per-shop call logs, collections/docs, and MCP connections (Jobber, Google).
+
+We do not click templates like Customer Support per shop. Onboard creates the agent from OUR template: she is Mabel, the opening disclosure, never quote a price, never invent an arrival, pin `grok-voice-think-fast-2.0`, no voice clone, no `web_search`/`x_search`, eight tools only.
+
+Shop packet (hours, zips, owner SMS) still lives in our database. Tenant is still resolved from the inbound DID. Store `xai_voice_agent_id` on the tenant when we have it.
+
+Collections may hold non-price shop docs. Reject dollar-looking uploads the same way greeting notes are rejected.
 
 See [`docs/xai-voice.md`](docs/xai-voice.md).
 
 ## How we work
 
-- PRs on branches. The CTO bot merges on this repo. Sam told it to merge and keep building.
-- Never deploy. Never run migrations. Draft them. Sam runs SQL.
+- PRs on branches. The CTO bot auto-merges every PR on this repo. Sam said 2026-08-29: auto merge every time, do not ask Sam to view or confirm.
+- Never deploy from a PR. Never run migrations. Draft them. Sam runs SQL.
 - Never hold tenant credentials: no Telnyx keys, no xAI API key, no Jobber tokens, no Stripe keys. Not in a file, not in an env example, not in a chat message. Fail closed without keys.
 - Never take an agent live from a PR.
 - Never touch production data. Read-only de-identified view only.
-- Never modify the live call path without an explicit approval from Sam on that specific change.
+- Never modify the live call path without Sam's sign-off on that specific change.
 - Every change to the vertical rule library requires a fixture. No exceptions.

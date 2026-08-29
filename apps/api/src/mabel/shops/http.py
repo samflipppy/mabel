@@ -70,6 +70,7 @@ def create_shop(body: OnboardShopBody, request: Request) -> dict[str, object]:
         "status": shop.status,
         "timezone": shop.packet.timezone,
         "service_area_zips": list(shop.packet.service_area_zips),
+        "xai_voice_agent_id": shop.packet.xai_voice_agent_id,
         "live": False,
         "draft": shop.status == SHOP_STATUS_DRAFT,
     }

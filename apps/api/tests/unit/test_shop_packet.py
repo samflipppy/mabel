@@ -39,6 +39,7 @@ def test_timezone_defaults_to_america_new_york() -> None:
     assert packet.after_hours_start == time(17, 0)
     assert packet.after_hours_end == time(8, 0)
     assert packet.greeting_notes is None
+    assert packet.xai_voice_agent_id is None
 
 
 def test_greeting_notes_without_money_are_kept() -> None:
