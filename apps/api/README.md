@@ -9,7 +9,7 @@ If Telnyx or xAI keys are missing, the webhook fails closed.
 
 ```
 src/mabel/
-  voice/       # webhook, DID, pinned voice model, session join, archive, per-shop agent stub
+  voice/       # webhook, DID, pinned voice model, session join, archive, per-shop agent
   mcp/         # eight tools, tenant from the token
   shops/       # packet, onboard, settings PATCH, POST /shops (admin, not MCP)
   leads/
@@ -53,7 +53,7 @@ Then:
 1. `POST /shops` with `Authorization: Bearer` and `MABEL_ADMIN_TOKEN`. Status stays `draft`. `live` stays false.
 2. `PATCH /shops/{tenant_id}` for shop name, hours, timezone, owner SMS, service-area zips, greeting notes. Dollar-looking notes are 400. Emergency rules are not on this route.
 3. Signed `POST /voice/webhook` joins through `FakeSessionTransport` in tests. Production opens a WebSocket only when `XAI_API_KEY` and `XAI_WEBHOOK_SECRET` are set, and never under pytest.
-4. `escalate_emergency` texts the owner when a vertical rule matches, or records the SMS unsent if Telnyx is missing. Non-emergencies queue a 7am recap. This service does not send the 7am text.
+4. `escalate_emergency` texts the owner when a vertical rule matches, or records the SMS unsent if Telnyx is missing. Non-emergencies queue a 7am recap. Send due recaps with `python -m mabel.sms.recap_send`. Not a cron.
 5. Overnight recap: `GET /shops/{tenant_id}/overnight`. Empty if there were no leads.
 
 Voice model is pinned in code to `grok-voice-think-fast-2.0`. Not an env var.
@@ -82,4 +82,4 @@ Names only. Never put Telnyx, xAI, Jobber, or Stripe keys in a file, an env exam
 
 Voice model is pinned in code to `grok-voice-think-fast-2.0`. Not an env var. Never `grok-voice-latest`.
 
-Each shop gets its own xAI Voice Agent from our template (she is Mabel, disclosure, never quote, never invent arrival, no clone, no `web_search`/`x_search`, eight tools). We do not click Customer Support. `xai_voice_agent_id` on the tenant is optional/null until we have it. This service does not call xAI to create the agent. Collections may hold non-price docs; dollar-looking uploads are rejected the same way as greeting notes.
+Each shop gets its own xAI Voice Agent from our template (she is Mabel, disclosure, never quote, never invent arrival, no clone, no `web_search`/`x_search`, eight tools at `MABEL_MCP_PUBLIC_URL`). We do not click Customer Support. Onboard creates the agent when `XAI_API_KEY` is set and stores `xai_voice_agent_id`. Without the key, or if create fails, the id stays null and the shop still drafts. Tests use `FakeXaiAgentsClient`. The production client refuses under pytest. The create route is not in the public docs.x.ai reference; console.x.ai can still mint the agent until that API is confirmed. Never invent a key. Collections may hold non-price docs; dollar-looking uploads are rejected the same way as greeting notes.

@@ -65,6 +65,14 @@ def telnyx_from_e164() -> str | None:
     return _optional("TELNYX_FROM_E164")
 
 
+DEFAULT_MCP_PUBLIC_URL = "http://127.0.0.1:8000/mcp"
+
+
+def mcp_public_url() -> str:
+    """Public MCP URL placed on the voice agent and session.update. Not a secret."""
+    return _optional("MABEL_MCP_PUBLIC_URL") or DEFAULT_MCP_PUBLIC_URL
+
+
 def _optional(name: str) -> str | None:
     value = os.environ.get(name)
     if value is None:

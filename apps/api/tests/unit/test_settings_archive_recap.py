@@ -91,6 +91,19 @@ class ScriptedConn:
         if "insert into recap_queue" in lowered:
             self.recaps.append(tuple(params))
             return _Rows([])
+        if "from app.due_recap_tenants" in lowered:
+            tenants = {str(row[1]) for row in self.recaps}
+            return _Rows([(tenant,) for tenant in tenants])
+        if "from recap_queue" in lowered and "sent_at is null" in lowered:
+            due = [row for row in self.recaps if len(row) < 5 or row[4] is None]
+            return _Rows(due)
+        if "update recap_queue set sent_at" in lowered:
+            recap_id = params[1] if params else None
+            when = params[0] if params else None
+            for index, row in enumerate(self.recaps):
+                if str(row[0]) == str(recap_id):
+                    self.recaps[index] = (row[0], row[1], row[2], row[3], when)
+            return _Rows([])
         return _Rows([])
 
     def commit(self) -> None:
@@ -199,6 +212,27 @@ def test_recap_insert_sets_local_and_leaves_sent_at_null() -> None:
     )
     assert str(item.id) in insert_params
     assert str(tenant) in insert_params
+    assert conn.committed is True
+    assert "BYPASSRLS" not in joined.upper()
+
+
+def test_mark_recap_sent_sets_local_and_does_not_delete() -> None:
+    from mabel.sms.recap_store import RECAP_MARK_SENT, mark_recap_sent
+
+    conn = ScriptedConn()
+    tenant = uuid4()
+    item = RecapItem(
+        tenant_id=tenant,
+        recap_at=datetime.now(timezone.utc),
+        sent_at=datetime.now(timezone.utc),
+    )
+    mark_recap_sent(item, conn)
+    joined = "\n".join(conn.queries)
+    assert conn.queries[0] == "BEGIN"
+    assert f"SET LOCAL app.tenant_id = '{tenant}'" in joined
+    assert "UPDATE recap_queue SET sent_at" in joined
+    assert "DELETE" not in joined.upper()
+    assert "sent_at" in RECAP_MARK_SENT
     assert conn.committed is True
     assert "BYPASSRLS" not in joined.upper()
 

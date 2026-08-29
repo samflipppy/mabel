@@ -11,6 +11,7 @@ sys.path.insert(0, str(REPO_ROOT / "packages" / "verticals"))
 import pytest  # noqa: E402
 
 from mabel.sms import FakeTelnyxSmsClient, bind_sms_client  # noqa: E402
+from mabel.voice.agents import bind_voice_agent_client  # noqa: E402
 from mabel.voice.session import FakeSessionTransport, bind_session_transport  # noqa: E402
 
 
@@ -23,6 +24,16 @@ def fake_telnyx_client():
         yield fake
     finally:
         bind_sms_client(None)
+
+
+@pytest.fixture(autouse=True)
+def reset_voice_agent_client():
+    """Do not leak a bound client. Tests that create an agent bind FakeXaiAgentsClient."""
+    bind_voice_agent_client(None)
+    try:
+        yield
+    finally:
+        bind_voice_agent_client(None)
 
 
 @pytest.fixture(autouse=True)

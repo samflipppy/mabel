@@ -52,6 +52,31 @@ def bind_sms_client(client: TelnyxSmsClient | None) -> TelnyxSmsClient | None:
     return previous
 
 
+def sms_client() -> TelnyxSmsClient:
+    if _bound_client is not None:
+        return _bound_client
+    return TelnyxHttpSmsClient()
+
+
+def record_sms_attempt(
+    *,
+    tenant_id: UUID,
+    to: str,
+    body: str,
+    sent: bool,
+    reason: str | None,
+    purpose: str = "emergency_now",
+) -> None:
+    _record(
+        tenant_id=tenant_id,
+        to=to,
+        body=body,
+        sent=sent,
+        reason=reason,
+        purpose=purpose,
+    )
+
+
 def sms_attempts() -> list[SmsAttempt]:
     return list(_attempts)
 
@@ -164,6 +189,7 @@ def _record(
     body: str,
     sent: bool,
     reason: str | None,
+    purpose: str = "emergency_now",
 ) -> None:
     _attempts.append(
         SmsAttempt(
@@ -172,6 +198,7 @@ def _record(
             body=body,
             sent=sent,
             reason=reason,
+            purpose=purpose,
         )
     )
 

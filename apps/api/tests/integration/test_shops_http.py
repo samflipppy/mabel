@@ -10,6 +10,7 @@ from mabel.mcp.tools import TOOL_NAMES, reset_store
 from mabel.platform.tenancy import directory, reset_directory
 from mabel.shops import http as shops_http
 from mabel.shops.packet import reset_packets
+from mabel.voice.agents import FakeXaiAgentsClient, bind_voice_agent_client
 from mabel.voice.webhook import AGENT_LIVE
 
 ADMIN_TOKEN = "unit-test-admin-token"
@@ -148,6 +149,20 @@ def test_post_shops_rejects_duplicate_did(monkeypatch) -> None:
     )
     assert second.status_code == 409
     assert "already answers this number" in second.json()["detail"]
+
+
+def test_post_shops_creates_agent_when_xai_key_set(monkeypatch) -> None:
+    monkeypatch.setenv("XAI_API_KEY", "test-not-a-real-key")
+    monkeypatch.setenv("MABEL_MCP_PUBLIC_URL", "https://mabel.fly.dev/mcp")
+    bind_voice_agent_client(FakeXaiAgentsClient(next_id="agent_http"))
+    client = _client(monkeypatch)
+    response = client.post("/shops", json=_body(inbound_did="+12165550177"), headers=_auth())
+    assert response.status_code == 201
+    data = response.json()
+    assert data["status"] == "draft"
+    assert data["live"] is False
+    assert data["xai_voice_agent_id"] == "agent_http"
+    assert AGENT_LIVE is False
 
 
 def test_post_shops_rejects_client_xai_voice_agent_id(monkeypatch) -> None:

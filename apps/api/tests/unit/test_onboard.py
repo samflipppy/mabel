@@ -16,6 +16,7 @@ from mabel.platform.tenancy import (
 from mabel.shops.onboard import OnboardedShop, onboard_shop
 from mabel.shops.packet import PacketError, ShopPacket, reset_packets
 from mabel.shops.store import SHOP_STATUS_DRAFT, persist_onboarded_shop
+from mabel.voice.agents import FakeXaiAgentsClient, VoiceAgentError, bind_voice_agent_client
 from mabel.voice.webhook import AGENT_LIVE
 
 
@@ -120,9 +121,53 @@ def test_onboard_records_xai_voice_agent_id_as_optional_null() -> None:
 
 
 def test_onboard_records_xai_voice_agent_id_when_provided_without_calling_xai() -> None:
+    fake = FakeXaiAgentsClient(next_id="agent_should_not_mint")
+    bind_voice_agent_client(fake)
     shop = _onboard(xai_voice_agent_id="agent_example")
     assert shop.packet.xai_voice_agent_id == "agent_example"
     assert directory().resolve(shop.inbound_did).packet.xai_voice_agent_id == "agent_example"
+    assert fake.created == []
+
+
+def test_onboard_creates_agent_when_xai_key_set(monkeypatch) -> None:
+    monkeypatch.setenv("XAI_API_KEY", "test-not-a-real-key")
+    monkeypatch.setenv("MABEL_MCP_PUBLIC_URL", "https://mabel.fly.dev/mcp")
+    fake = FakeXaiAgentsClient(next_id="agent_from_xai")
+    bind_voice_agent_client(fake)
+    shop = _onboard()
+    assert shop.status == "draft"
+    assert shop.packet.xai_voice_agent_id == "agent_from_xai"
+    assert directory().resolve(shop.inbound_did).packet.xai_voice_agent_id == "agent_from_xai"
+    assert fake.created[0]["model"] == "grok-voice-think-fast-2.0"
+    assert fake.created[0]["body"]["tools"][0]["server_url"] == "https://mabel.fly.dev/mcp"
+    assert AGENT_LIVE is False
+
+
+def test_onboard_without_key_stays_null_and_still_drafts(monkeypatch) -> None:
+    monkeypatch.delenv("XAI_API_KEY", raising=False)
+    shop = _onboard()
+    assert shop.packet.xai_voice_agent_id is None
+    assert shop.status == "draft"
+
+
+def test_onboard_create_failure_still_drafts(monkeypatch) -> None:
+    class Boom:
+        def create_from_template(self, *, shop_name: str) -> str:
+            raise VoiceAgentError("Mabel could not create a voice agent.")
+
+    monkeypatch.setenv("XAI_API_KEY", "test-not-a-real-key")
+    bind_voice_agent_client(Boom())
+    shop = _onboard()
+    assert shop.packet.xai_voice_agent_id is None
+    assert shop.status == "draft"
+    assert AGENT_LIVE is False
+
+
+def test_onboard_with_key_refuses_live_xai_under_pytest_and_still_drafts(monkeypatch) -> None:
+    monkeypatch.setenv("XAI_API_KEY", "test-not-a-real-key")
+    shop = _onboard()
+    assert shop.packet.xai_voice_agent_id is None
+    assert shop.status == "draft"
 
 
 def test_onboard_status_is_draft_and_agent_stays_not_live() -> None:
@@ -250,6 +295,20 @@ def test_postgres_onboard_inserts_provided_xai_voice_agent_id() -> None:
     )
     assert tenant_insert_params[-1] == "agent_example"
     assert shop.packet.xai_voice_agent_id == "agent_example"
+    assert conn.committed is True
+
+
+def test_postgres_onboard_inserts_created_agent_id(monkeypatch) -> None:
+    monkeypatch.setenv("XAI_API_KEY", "test-not-a-real-key")
+    bind_voice_agent_client(FakeXaiAgentsClient(next_id="agent_created"))
+    conn = ScriptedConn(did_row=None)
+    shop = _onboard(inbound_did="+12165550312", conn=conn)
+    tenant_insert_params = next(
+        params for query, params in zip(conn.queries, conn.params) if "INSERT INTO tenants" in query
+    )
+    assert tenant_insert_params[-1] == "agent_created"
+    assert shop.packet.xai_voice_agent_id == "agent_created"
+    assert shop.status == "draft"
     assert conn.committed is True
 
 
