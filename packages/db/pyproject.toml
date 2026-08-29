@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mabel-db"
+version = "2.0.0"
+description = "Every Postgres connection Mabel opens, and the tenant-context helper."
+requires-python = ">=3.12"
+dependencies = [
+  "mabel-domain",
+  "sqlalchemy[asyncio]>=2.0.35",
+  "asyncpg>=0.29",
+  "alembic>=1.13",
+]
+
+[tool.setuptools.packages.find]
+include = ["mabel_db*"]
+
+[tool.setuptools.package-data]
+mabel_db = ["migrations/*.py", "migrations/**/*.py", "migrations/*.mako", "migrations/*.ini"]

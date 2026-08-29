@@ -9,7 +9,6 @@ from mabel_verticals.load import (
     load_json,
     load_latest_rules,
     load_rules,
-    validate_rules,
 )
 
 
