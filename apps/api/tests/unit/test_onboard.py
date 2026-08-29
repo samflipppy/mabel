@@ -113,6 +113,18 @@ def test_onboard_rejects_duplicate_did() -> None:
         )
 
 
+def test_onboard_records_xai_voice_agent_id_as_optional_null() -> None:
+    shop = _onboard()
+    assert shop.packet.xai_voice_agent_id is None
+    assert directory().resolve(shop.inbound_did).packet.xai_voice_agent_id is None
+
+
+def test_onboard_records_xai_voice_agent_id_when_provided_without_calling_xai() -> None:
+    shop = _onboard(xai_voice_agent_id="agent_example")
+    assert shop.packet.xai_voice_agent_id == "agent_example"
+    assert directory().resolve(shop.inbound_did).packet.xai_voice_agent_id == "agent_example"
+
+
 def test_onboard_status_is_draft_and_agent_stays_not_live() -> None:
     shop = _onboard()
     assert shop.status == SHOP_STATUS_DRAFT
@@ -218,9 +230,27 @@ def test_postgres_onboard_sets_local_then_inserts_draft() -> None:
     assert str(shop.tenant_id) in tenant_insert_params
     assert SHOP_STATUS_DRAFT in tenant_insert_params
     assert "live" not in tenant_insert_params
+    assert "xai_voice_agent_id" in joined
+    assert tenant_insert_params[-1] is None
+    assert shop.packet.xai_voice_agent_id is None
     assert shop.status == "draft"
     assert conn.committed is True
     assert conn.rolled_back is False
+
+
+def test_postgres_onboard_inserts_provided_xai_voice_agent_id() -> None:
+    conn = ScriptedConn(did_row=None)
+    shop = _onboard(
+        inbound_did="+12165550311",
+        xai_voice_agent_id="agent_example",
+        conn=conn,
+    )
+    tenant_insert_params = next(
+        params for query, params in zip(conn.queries, conn.params) if "INSERT INTO tenants" in query
+    )
+    assert tenant_insert_params[-1] == "agent_example"
+    assert shop.packet.xai_voice_agent_id == "agent_example"
+    assert conn.committed is True
 
 
 def test_postgres_onboard_duplicate_did_fails_closed() -> None:

@@ -4,6 +4,7 @@ Sam runs these. A bot does not. Never against production.
 
 - `0001_init.sql` — roles, tenants, DIDs, leads, notes, RLS
 - `0002_shop_packet.sql` — shop packet columns on tenants plus `service_area_zips`
+- `0003_xai_voice_agent.sql` — nullable `xai_voice_agent_id` on tenants (per-shop agent)
 
-Onboard writes tenant + inbound DID + zips under `SET LOCAL app.tenant_id`. Those two files have the columns. Do not add a third unless one is missing.
+Onboard writes tenant + inbound DID + zips under `SET LOCAL app.tenant_id`. `xai_voice_agent_id` is optional/null until we have the agent. This repo does not call xAI to create one.
 

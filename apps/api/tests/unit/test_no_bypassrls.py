@@ -3,6 +3,7 @@ from pathlib import Path
 from mabel.leads import persist as leads_persist
 from mabel.platform import db
 from mabel.shops import onboard, store
+from mabel.voice import agents as voice_agents
 
 
 def test_app_never_enables_bypassrls() -> None:
@@ -14,7 +15,7 @@ def test_app_never_enables_bypassrls() -> None:
 
 
 def test_onboard_never_uses_bypassrls_or_migrator() -> None:
-    for module in (onboard, store, leads_persist):
+    for module in (onboard, store, leads_persist, voice_agents):
         source = Path(module.__file__).read_text(encoding="utf-8")
         assert "SET BYPASSRLS" not in source.upper()
         assert "BYPASSRLS TRUE" not in source.upper().replace(" ", "")

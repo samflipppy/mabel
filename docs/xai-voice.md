@@ -20,7 +20,7 @@ The alias `grok-voice-latest` moved from Think Fast 1.0 to Think Fast 2.0 on **A
 | Extra `conversation.item.create` text | **$0.004** |
 | Speech-to-speech `grok-voice-think-fast-1.0` (do not use) | $0.05 / min |
 
-Do **not** enable `web_search` or `x_search`. Those are **$5 / 1k** calls. Collections search is also not the onboarding path ($2.50 / 1k plus storage).
+Do **not** enable `web_search` or `x_search`. Those are **$5 / 1k** calls. Collections may hold non-price shop docs. Reject dollar-looking uploads the same way greeting notes are rejected. Do not dump a price sheet into a collection.
 
 ## SIP (Telnyx)
 
@@ -81,8 +81,18 @@ Streamable HTTP or SSE only. stdio is not used.
 
 xAI session resumption cache drops history after **30 minutes of idle**. Audio is processed in real time and is not our store. Archive transcript and recording to our own storage immediately post-call. Do not treat the xAI cache as storage.
 
-## One Mabel agent
+## One agent per shop
 
-ONE xAI Voice Agent for Mabel, not one agent per client. Shop facts live in **our** database (`infra/0002_shop_packet.sql`) and are injected after tenant resolution from the inbound DID.
+Each client gets their own xAI Voice Agent in console.x.ai. Reason: per-shop call logs, collections/docs, and MCP connections (Jobber, Google).
 
-Console collections are **not** the onboarding path. Uploading a shop's PDFs into xAI collections would let her quote prices. Facts stay in our DB so we can split to per-shop xAI agents later if we need to.
+We do **not** click templates like Customer Support per shop. Onboard creates the agent from **our** template:
+
+- She is Mabel. Not a generic support bot.
+- Opening disclosure: force_message, not interruptible.
+- Never quote a price. Never invent an arrival time.
+- Pin **`grok-voice-think-fast-2.0`**. No voice clone.
+- No `web_search`. No `x_search`. Eight tools only.
+
+Shop packet (hours, zips, owner SMS) still lives in **our** database (`infra/0002_shop_packet.sql`) and is injected after tenant resolution from the inbound DID. Store `xai_voice_agent_id` on the tenant when we have it (`infra/0003_xai_voice_agent.sql`, draft). Onboard records it as optional/null until we actually create the agent. This repo still does not call the xAI API to create one.
+
+Collections may hold non-price shop docs (hours sheet, service-area notes with no figures). Reject dollar-looking uploads the same way greeting notes are rejected. A price PDF in a collection is how she starts quoting. Don't.

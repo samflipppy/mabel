@@ -26,5 +26,10 @@ def test_dollars_won_is_numeric_never_float() -> None:
     assert "Owner-entered. Never written from an LLM." in SQL_0001
 
 
-def test_no_third_sql_file_for_leads() -> None:
-    assert list((REPO_ROOT / "infra").glob("0003*.sql")) == []
+def test_third_sql_file_is_voice_agent_id_not_leads() -> None:
+    files = list((REPO_ROOT / "infra").glob("0003*.sql"))
+    assert [path.name for path in files] == ["0003_xai_voice_agent.sql"]
+    sql = files[0].read_text(encoding="utf-8")
+    assert "xai_voice_agent_id" in sql
+    assert "CREATE TABLE leads" not in sql
+    assert "dollars_won" not in sql

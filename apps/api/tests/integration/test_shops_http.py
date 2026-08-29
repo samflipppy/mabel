@@ -80,6 +80,7 @@ def test_post_shops_right_token_creates_draft_and_does_not_echo_secrets(monkeypa
     assert data["inbound_did"] == "+12165550199"
     assert data["service_area_zips"] == ["44107"]
     assert data["timezone"] == "America/New_York"
+    assert data["xai_voice_agent_id"] is None
     assert AGENT_LIVE is False
     assert "sk-" not in response.text
     assert "whsec_" not in response.text
@@ -146,6 +147,14 @@ def test_post_shops_rejects_duplicate_did(monkeypatch) -> None:
     )
     assert second.status_code == 409
     assert "already answers this number" in second.json()["detail"]
+
+
+def test_post_shops_rejects_client_xai_voice_agent_id(monkeypatch) -> None:
+    client = _client(monkeypatch)
+    body = _body()
+    body["xai_voice_agent_id"] = "agent_from_client"
+    response = client.post("/shops", json=body, headers=_auth())
+    assert response.status_code == 422
 
 
 def test_post_shops_rejects_client_tenant_id(monkeypatch) -> None:

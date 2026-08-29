@@ -56,9 +56,13 @@ def onboard_shop(
     after_hours_start: time | None = None,
     after_hours_end: time | None = None,
     greeting_notes: str | None = None,
+    xai_voice_agent_id: str | None = None,
     conn: Any | None = None,
 ) -> OnboardedShop:
-    """Create a shop as draft. Tenant id is minted here, never taken from a caller."""
+    """Create a shop as draft. Tenant id is minted here, never taken from a caller.
+
+    xai_voice_agent_id is optional. This path does not call xAI to create an agent.
+    """
     tenant_id = uuid4()
     did = _inbound_did(inbound_did)
     packet_kwargs: dict[str, Any] = {}
@@ -74,6 +78,7 @@ def onboard_shop(
         timezone=timezone or DEFAULT_TIMEZONE,
         service_area_zips=tuple(service_area_zips),
         greeting_notes=greeting_notes,
+        xai_voice_agent_id=xai_voice_agent_id,
         **packet_kwargs,
     )
 

@@ -1,9 +1,9 @@
 """Shop packet: structured facts for one tenant.
 
 This is client onboarding. Shop name, vertical, timezone, owner SMS, after-hours
-window, service-area zips, optional greeting notes. Greeting notes may not hold
-dollar-looking text. Money, if it ever lands on a shop, stays NUMERIC(12,2) in SQL
-and Decimal in Python. An LLM does not write this packet.
+window, service-area zips, optional greeting notes, optional xAI Voice Agent id.
+Greeting notes may not hold dollar-looking text. Money, if it ever lands on a shop,
+stays NUMERIC(12,2) in SQL and Decimal in Python. An LLM does not write this packet.
 """
 
 from __future__ import annotations
@@ -68,6 +68,7 @@ class ShopPacket:
     after_hours_end: time = DEFAULT_AFTER_HOURS_END
     service_area_zips: tuple[str, ...] = ()
     greeting_notes: str | None = None
+    xai_voice_agent_id: str | None = None
 
     def __post_init__(self) -> None:
         name = self.name.strip()
@@ -99,6 +100,11 @@ class ShopPacket:
             else:
                 reject_dollar_text(notes)
         object.__setattr__(self, "greeting_notes", notes)
+
+        agent_id = self.xai_voice_agent_id
+        if agent_id is not None:
+            agent_id = agent_id.strip() or None
+        object.__setattr__(self, "xai_voice_agent_id", agent_id)
 
         zips = tuple(normalize_zip(zip_code) for zip_code in self.service_area_zips)
         object.__setattr__(self, "service_area_zips", zips)
