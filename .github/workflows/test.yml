@@ -1,9 +1,13 @@
 name: test
 
+# Manual only, at Sam's request 2026-08-29. See the note in ci.yml.
+#
+# This is the v1 workflow. It installs packages/verticals and apps/api the old
+# way, and both have been restructured since -- it would fail now for reasons
+# that have nothing to do with the code being wrong. Superseded by ci.yml;
+# delete it once ci.yml has gone green at least once.
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read

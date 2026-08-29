@@ -1,9 +1,20 @@
 name: ci
 
+# Manual only, at Sam's request 2026-08-29: the phases are still landing and
+# a run on every push was costing money for no decision anybody was waiting on.
+#
+# RE-ENABLE BEFORE ANY OF THIS MERGES. The isolation suite has never executed,
+# and CI is the only place it can — there is no Docker daemon or local Postgres
+# on the machine these branches were written on. Until a run goes green, the
+# cross-tenant guarantees are unverified intent.
+#
+# To restore, replace the block below with:
+#   on:
+#     pull_request:
+#     push:
+#       branches: [main]
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
