@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mabel-telnyx"
+version = "2.0.0"
+description = "Telnyx SMS and SIP. Fails closed without a key."
+requires-python = ">=3.12"
+dependencies = ["mabel-domain", "httpx>=0.27"]
+
+[tool.setuptools.packages.find]
+include = ["mabel_telnyx*"]
