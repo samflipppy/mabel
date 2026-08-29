@@ -16,10 +16,7 @@ from mabel.sms.client import SmsError, TelnyxHttpSmsClient, TelnyxSmsClient
 
 # 10DLC: nothing goes to a real number until the campaign clears.
 EMERGENCY_SMS_TEMPLATE = (
-    "{shop_name} emergency {trigger}. "
-    "Address: {address}. "
-    "Problem: {problem}. "
-    "Callback: {callback}."
+    "{shop_name} emergency {trigger}. Address: {address}. Problem: {problem}. Callback: {callback}."
 )
 
 REASON_TELNYX = "telnyx not configured"

@@ -149,9 +149,7 @@ def test_webhook_unknown_did(monkeypatch) -> None:
     assert response.status_code == 404
 
 
-def test_webhook_joins_fake_session_when_keys_present(
-    monkeypatch, fake_session_transport
-) -> None:
+def test_webhook_joins_fake_session_when_keys_present(monkeypatch, fake_session_transport) -> None:
     client, tenant_id = _client(
         monkeypatch,
         xai_key="present-but-not-logged",
@@ -204,9 +202,7 @@ def test_webhook_joins_fake_session_when_keys_present(
     assert force["item"]["content"][0]["text"] == OPENING_DISCLOSURE
 
 
-def test_fake_session_end_archives_only_that_tenant(
-    monkeypatch, fake_session_transport
-) -> None:
+def test_fake_session_end_archives_only_that_tenant(monkeypatch, fake_session_transport) -> None:
     client, tenant_id = _client(
         monkeypatch,
         xai_key="present-but-not-logged",
