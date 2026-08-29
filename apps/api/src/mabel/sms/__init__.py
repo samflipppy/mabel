@@ -5,7 +5,7 @@ Never send if Telnyx is missing. Never log a key.
 
 from __future__ import annotations
 
-from mabel.platform.config import ConfigError, telnyx_ready
+from mabel.platform.config import telnyx_ready
 
 
 class SmsError(RuntimeError):
