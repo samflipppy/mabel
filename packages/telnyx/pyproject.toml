@@ -7,7 +7,7 @@ name = "mabel-telnyx"
 version = "2.0.0"
 description = "Telnyx SMS and SIP. Fails closed without a key."
 requires-python = ">=3.12"
-dependencies = ["mabel-domain", "httpx>=0.27"]
+dependencies = ["mabel-domain", "httpx>=0.27", "pynacl>=1.5"]
 
 [tool.setuptools.packages.find]
 include = ["mabel_telnyx*"]
