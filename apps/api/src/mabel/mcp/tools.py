@@ -11,6 +11,8 @@ from uuid import UUID, uuid4
 from mabel_verticals.evaluate import evaluate_scenario
 from mabel_verticals.load import load_latest_rules
 
+from mabel.shops.packet import PacketError, normalize_zip, packet_for, reset_packets
+
 READ_TOOLS = (
     "lookup_customer",
     "get_service_area",
@@ -74,7 +76,6 @@ class Store:
     leads: list[Lead] = field(default_factory=list)
     notes: list[Note] = field(default_factory=list)
     customers: list[dict[str, Any]] = field(default_factory=list)
-    zips: set[str] = field(default_factory=set)
     jobs: list[dict[str, Any]] = field(default_factory=list)
 
     def for_tenant(self, tenant_id: UUID) -> list[Lead]:
@@ -91,6 +92,7 @@ def store() -> Store:
 def reset_store() -> None:
     global _store
     _store = Store()
+    reset_packets()
 
 
 def _reject_tenant_argument(arguments: dict[str, Any]) -> None:
@@ -111,9 +113,14 @@ def lookup_customer(*, phone: str, **ignored: Any) -> dict[str, Any]:
 
 def get_service_area(*, zip_code: str, **ignored: Any) -> dict[str, Any]:
     _reject_tenant_argument(ignored)
-    current_tenant()
-    covered = not store().zips or zip_code in store().zips
-    return {"zip": zip_code, "in_area": covered}
+    tenant_id = current_tenant()
+    try:
+        zip5 = normalize_zip(zip_code)
+    except PacketError:
+        return {"zip": zip_code, "in_area": False}
+    packet = packet_for(tenant_id)
+    zips = packet.service_area_zips if packet is not None else ()
+    return {"zip": zip5, "in_area": zip5 in zips}
 
 
 def check_availability(**ignored: Any) -> dict[str, Any]:

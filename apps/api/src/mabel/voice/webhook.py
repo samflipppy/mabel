@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse
 
 from mabel.platform.config import ConfigError, require_webhook_secret, telnyx_ready, xai_ready
 from mabel.platform.tenancy import UnknownDidError, directory
+from mabel.shops.packet import PacketError
 from mabel.voice.did import to_did_from_payload
 from mabel.voice.model import VOICE_MODEL
 from mabel.voice.signatures import WebhookVerificationError, verify_webhook
@@ -48,6 +49,8 @@ async def inbound_call(request: Request) -> JSONResponse:
         tenant = directory().resolve(to_did)
     except UnknownDidError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except PacketError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

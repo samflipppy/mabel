@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from mabel.platform.tenancy import normalize_e164
+from mabel.platform.phones import normalize_e164
 
 
 def sip_header(headers: list[dict[str, str]], name: str) -> str | None:

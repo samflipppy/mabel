@@ -38,11 +38,18 @@ No auto-deletes. No auto-refunds. No auto-porting numbers. No taking an agent li
 
 Pin `grok-voice-think-fast-2.0`. Never `grok-voice-latest`. That alias moved versions and silently changed the per-minute price.
 
+## Architecture (locked 2026-08-29)
+
+ONE xAI Voice Agent for Mabel, not one agent per client. Shop facts live in our database and are injected after tenant resolution from the inbound DID. Do not onboard shops by uploading docs into xAI Voice Agent collections — she would quote prices from PDFs. Splitting to per-shop xAI agents later is possible because facts stay in our DB.
+
+See [`docs/xai-voice.md`](docs/xai-voice.md).
+
 ## How we work
 
-- PRs on branches. Sam merges. Never merge to main from a bot.
-- Never deploy. Never run migrations. Draft them.
-- Never hold tenant credentials: no Telnyx keys, no xAI API key, no Jobber tokens, no Stripe keys. Not in a file, not in an env var, not in a chat message.
+- PRs on branches. The CTO bot merges on this repo. Sam told it to merge and keep building.
+- Never deploy. Never run migrations. Draft them. Sam runs SQL.
+- Never hold tenant credentials: no Telnyx keys, no xAI API key, no Jobber tokens, no Stripe keys. Not in a file, not in an env example, not in a chat message. Fail closed without keys.
+- Never take an agent live from a PR.
 - Never touch production data. Read-only de-identified view only.
 - Never modify the live call path without an explicit approval from Sam on that specific change.
 - Every change to the vertical rule library requires a fixture. No exceptions.

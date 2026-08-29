@@ -22,6 +22,7 @@ def _client(
     telnyx_key: str | None = None,
 ) -> TestClient:
     reset_directory()
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     directory().register(
         DID,
         Tenant(id=uuid4(), vertical="plumbing", name="Example Plumbing"),
