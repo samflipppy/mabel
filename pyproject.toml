@@ -1,0 +1,43 @@
+[project]
+name = "mabel"
+version = "2.0.0"
+description = "Mabel answers the phone when a contractor can't."
+requires-python = ">=3.12"
+dependencies = [
+  "mabel-domain",
+  "mabel-verticals",
+  "mabel-db",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "ruff>=0.6",
+  "pyright>=1.1.380",
+]
+
+[tool.uv.workspace]
+members = ["packages/*", "apps/api", "apps/media", "apps/worker"]
+
+[tool.uv.sources]
+mabel-domain = { workspace = true }
+mabel-verticals = { workspace = true }
+mabel-db = { workspace = true }
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "standard"
+include = ["packages", "apps/api", "apps/media", "apps/worker", "tests"]
+exclude = ["**/node_modules", "**/__pycache__", "apps/api/src/mabel"]
