@@ -51,6 +51,12 @@ class MemoryDidDirectory(DidDirectory):
             raise UnknownDidError("Mabel does not know this number.")
         return tenant
 
+    def did_for(self, tenant_id: UUID) -> str | None:
+        for did, tenant in self._mapping.items():
+            if tenant.id == tenant_id:
+                return did
+        return None
+
 
 class PostgresDidDirectory(DidDirectory):
     """DID lookup through Postgres, then the shop packet under tenant_scope."""

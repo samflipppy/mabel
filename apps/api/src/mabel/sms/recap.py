@@ -5,9 +5,9 @@ recap_at is the next 7am in the shop's timezone. Deterministic. No model.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from uuid import UUID
+from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 
 from mabel.shops.packet import DEFAULT_TIMEZONE, packet_for
@@ -19,6 +19,8 @@ _clock: datetime | None = None
 class RecapItem:
     tenant_id: UUID
     recap_at: datetime
+    id: UUID = field(default_factory=uuid4)
+    lead_id: UUID | None = None
 
 
 _queue: list[RecapItem] = []
@@ -55,13 +57,28 @@ def next_7am_local(*, tz_name: str, now: datetime) -> datetime:
     return candidate
 
 
-def queue_morning_recap(tenant_id: UUID) -> RecapItem:
+def queue_morning_recap(tenant_id: UUID, *, lead_id: UUID | None = None) -> RecapItem:
     """Enqueue a 7am recap. Do not SMS. Do not call Telnyx."""
     packet = packet_for(tenant_id)
     tz_name = packet.timezone if packet is not None else DEFAULT_TIMEZONE
     item = RecapItem(
         tenant_id=tenant_id,
         recap_at=next_7am_local(tz_name=tz_name, now=current_clock()),
+        lead_id=lead_id,
     )
     _queue.append(item)
+    if _database_url():
+        from mabel.sms.recap_store import persist_recap
+
+        persist_recap(item)
     return item
+
+
+def _database_url() -> str | None:
+    import os
+
+    value = os.environ.get("DATABASE_URL")
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped or None

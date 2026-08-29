@@ -24,8 +24,9 @@ def test_repo_does_not_use_moving_voice_alias() -> None:
     assert hits == []
 
 
-def test_voice_docs_pin_and_do_not_join() -> None:
+def test_voice_docs_pin_and_join_is_fail_closed() -> None:
     text = (REPO_ROOT / "docs" / "xai-voice.md").read_text(encoding="utf-8")
+    session_src = (API_ROOT / "src" / "mabel" / "voice" / "session.py").read_text(encoding="utf-8")
     assert "grok-voice-think-fast-2.0" in text
     assert "We never use the alias" in text
     assert "$0.08" in text
@@ -47,7 +48,8 @@ def test_voice_docs_pin_and_do_not_join() -> None:
     assert "book_estimate" in text
     assert "get_job_history" in text
     assert "log_note" in text
-    assert "This repo still does not open" in text
+    assert "FakeSessionTransport" in text
+    assert "will not open a WebSocket from tests" in session_src
     assert "own xAI Voice Agent" in text
     assert "ONE xAI Voice Agent" not in text
     assert "Customer Support" in text

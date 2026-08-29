@@ -5,6 +5,7 @@ dollars_won stays null on write. The model must not write it.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -15,9 +16,14 @@ from mabel.platform.db import tenant_scope
 
 LEAD_INSERT = """
         INSERT INTO leads (
-            id, tenant_id, name, address, callback, problem, urgency, source, emergency_code
+            id, tenant_id, name, address, callback, problem, urgency, source,
+            emergency_code, sms_sent, sms_reason
         )
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+
+LEAD_SMS_UPDATE = """
+        UPDATE leads SET sms_sent = %s, sms_reason = %s WHERE id = %s
         """
 
 NOTE_INSERT = """
@@ -27,7 +33,8 @@ NOTE_INSERT = """
 
 LEAD_SELECT = """
         SELECT id, tenant_id, name, address, callback, problem,
-               urgency, source, emergency_code, dollars_won
+               urgency, source, emergency_code, dollars_won, created_at,
+               sms_sent, sms_reason
         FROM leads
         """
 
@@ -55,6 +62,8 @@ def insert_lead(conn: Any, lead: Lead) -> None:
             lead.urgency,
             lead.source,
             lead.emergency_code,
+            lead.sms_sent,
+            lead.sms_reason,
         ),
     )
 
@@ -75,6 +84,16 @@ def persist_lead(lead: Lead, conn: Any | None = None) -> None:
 def persist_note(note: Note, conn: Any | None = None) -> None:
     with tenant_scope(note.tenant_id, conn) as scoped:
         insert_note(scoped, note)
+
+
+def update_lead_sms(lead: Lead, conn: Any | None = None) -> None:
+    """Record whether the owner text went out. Does not touch dollars_won."""
+    if using_database() or conn is not None:
+        with tenant_scope(lead.tenant_id, conn) as scoped:
+            scoped.execute(
+                LEAD_SMS_UPDATE,
+                (lead.sms_sent, lead.sms_reason, str(lead.id)),
+            )
 
 
 def list_leads(conn: Any) -> list[Lead]:
@@ -99,6 +118,20 @@ def fetch_notes(tenant_id: UUID, conn: Any | None = None) -> list[Note]:
 
 
 def _lead_from_row(row: Any) -> Lead:
+    created = None
+    sms_sent = None
+    sms_reason = None
+    if len(row) > 10 and row[10] is not None:
+        created = row[10] if isinstance(row[10], datetime) else datetime.fromisoformat(str(row[10]))
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+    if len(row) > 11:
+        sms_sent = None if row[11] is None else bool(row[11])
+    if len(row) > 12:
+        sms_reason = None if row[12] is None else str(row[12])
+    kwargs: dict[str, Any] = {}
+    if created is not None:
+        kwargs["created_at"] = created
     return Lead(
         id=UUID(str(row[0])),
         tenant_id=UUID(str(row[1])),
@@ -109,7 +142,10 @@ def _lead_from_row(row: Any) -> Lead:
         urgency=str(row[6]),
         source=str(row[7]),
         emergency_code=None if row[8] is None else str(row[8]),
-        dollars_won=_as_money(row[9]),
+        dollars_won=_as_money(row[9]) if len(row) > 9 else None,
+        sms_sent=sms_sent,
+        sms_reason=sms_reason,
+        **kwargs,
     )
 
 

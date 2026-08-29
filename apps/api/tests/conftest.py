@@ -11,6 +11,7 @@ sys.path.insert(0, str(REPO_ROOT / "packages" / "verticals"))
 import pytest  # noqa: E402
 
 from mabel.sms import FakeTelnyxSmsClient, bind_sms_client  # noqa: E402
+from mabel.voice.session import FakeSessionTransport, bind_session_transport  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -22,3 +23,14 @@ def fake_telnyx_client():
         yield fake
     finally:
         bind_sms_client(None)
+
+
+@pytest.fixture(autouse=True)
+def fake_session_transport():
+    """Tests never open a WebSocket to xAI."""
+    fake = FakeSessionTransport()
+    bind_session_transport(fake)
+    try:
+        yield fake
+    finally:
+        bind_session_transport(None)

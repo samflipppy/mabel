@@ -2,7 +2,7 @@
 
 Researched 2026-08-29 from xAI docs ([speech to speech](https://docs.x.ai/developers/model-capabilities/audio/speech-to-speech), [SIP](https://docs.x.ai/developers/model-capabilities/audio/speech-to-speech/sip), [pricing](https://docs.x.ai/developers/pricing), [voice API](https://docs.x.ai/developers/rest-api-reference/inference/voice)).
 
-This file is the in-repo knowledge base. It is not a live join. This repo still does not open `wss://api.x.ai/v1/realtime`. Sam has to approve that change on that specific change.
+This file is the in-repo knowledge base. Join is wired behind fail-closed keys. Production opens `wss://api.x.ai/v1/realtime` only when `XAI_API_KEY` and `XAI_WEBHOOK_SECRET` are set. Tests use `FakeSessionTransport` and never open a WebSocket. The production client refuses under pytest. `AGENT_LIVE` stays false.
 
 No keys belong in this file.
 
@@ -38,11 +38,11 @@ Webhook event: **`realtime.call.incoming`**. Verify Standard Webhooks headers:
 
 Tenant comes from the **SIP To DID**, never from anything the model passes.
 
-Join URL (not wired in this repo): `wss://api.x.ai/v1/realtime?call_id={call_id}` with the xAI **API key**. Ephemeral client secrets are **not** supported for SIP `call_id` sessions.
+Join URL: `wss://api.x.ai/v1/realtime?call_id={call_id}&model=grok-voice-think-fast-2.0` with the xAI **API key**. Ephemeral client secrets are **not** supported for SIP `call_id` sessions. Tests never open this socket.
 
 ## session.update
 
-After a join that Sam has approved, send `session.update` with:
+After DID resolve and keys present, send `session.update` with:
 
 - `instructions` — shop packet facts injected after DID resolve, plus the vertical rules. No dollar figures.
 - Built-in `voice` (for example `eve`). **No cloning.**
@@ -93,6 +93,6 @@ We do **not** click templates like Customer Support per shop. Onboard creates th
 - Pin **`grok-voice-think-fast-2.0`**. No voice clone.
 - No `web_search`. No `x_search`. Eight tools only.
 
-Shop packet (hours, zips, owner SMS) still lives in **our** database (`infra/0002_shop_packet.sql`) and is injected after tenant resolution from the inbound DID. Store `xai_voice_agent_id` on the tenant when we have it (`infra/0003_xai_voice_agent.sql`, draft). Onboard records it as optional/null until we actually create the agent. This repo still does not call the xAI API to create one.
+Shop packet (hours, zips, owner SMS) still lives in **our** database (`infra/0002_shop_packet.sql`) and is injected after tenant resolution from the inbound DID. Store `xai_voice_agent_id` on the tenant when we have it (`infra/0003_xai_voice_agent.sql`, draft). Onboard records it as optional/null until we actually create the agent. Creating the console agent is still a stub; this repo does not call xAI to create one. Call join uses `FakeSessionTransport` in tests.
 
 Collections may hold non-price shop docs (hours sheet, service-area notes with no figures). Reject dollar-looking uploads the same way greeting notes are rejected. A price PDF in a collection is how she starts quoting. Don't.

@@ -1,9 +1,11 @@
 """Inbound call webhook.
 
 Verify the signature, resolve the tenant from the To DID, then stop if
-Telnyx or xAI is not configured. Joining the live realtime session is a
-later change and needs Sam's sign-off on that specific change. This stub
-never takes an agent live.
+Telnyx or xAI is not configured. When keys are present, join through
+SessionTransport: mint a tenant MCP token, send session.update from our
+template plus the shop packet, then force_message disclosure. Tests bind
+FakeSessionTransport. The production websocket client refuses under pytest.
+AGENT_LIVE stays false. Nothing here takes a shop live.
 """
 
 from __future__ import annotations
@@ -16,6 +18,7 @@ from mabel.platform.tenancy import UnknownDidError, directory
 from mabel.shops.packet import PacketError
 from mabel.voice.did import to_did_from_payload
 from mabel.voice.model import VOICE_MODEL
+from mabel.voice.session import SessionError, join_inbound_call
 from mabel.voice.signatures import WebhookVerificationError, verify_webhook
 
 router = APIRouter()
@@ -65,14 +68,30 @@ async def inbound_call(request: Request) -> JSONResponse:
             detail="Mabel cannot join this call. xAI is not configured.",
         )
 
-    # Keys are present. Still do not open the realtime socket, and never go live.
     if AGENT_LIVE:
         raise HTTPException(
             status_code=503,
             detail="Mabel will not take an agent live from this stub.",
         )
 
-    call_id = (payload.get("data") or {}).get("call_id")
+    call_id = str((payload.get("data") or {}).get("call_id") or "")
+    if not call_id:
+        raise HTTPException(status_code=400, detail="Mabel cannot find this call.")
+
+    packet = tenant.packet
+    try:
+        joined = await join_inbound_call(
+            tenant_id=tenant.id,
+            call_id=call_id,
+            packet=packet,
+        )
+    except ConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except PacketError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except SessionError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
     return JSONResponse(
         {
             "accepted": True,
@@ -80,9 +99,8 @@ async def inbound_call(request: Request) -> JSONResponse:
             "vertical": tenant.vertical,
             "voice_model": VOICE_MODEL,
             "call_id": call_id,
-            "joined": False,
+            "joined": joined.joined,
             "live": False,
-            "reason": "Call join is not wired yet. Sam has to approve that change.",
         }
     )
 
