@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
-from dataclasses import dataclass, field
-from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
 from mabel_verticals.evaluate import evaluate_scenario
 from mabel_verticals.load import load_latest_rules
 
+from mabel.leads.memory import Lead, Note, Store, reset_memory_store
+from mabel.leads.memory import store as memory_store
+from mabel.leads.persist import persist_lead, persist_note, using_database
 from mabel.shops.packet import PacketError, normalize_zip, packet_for, reset_packets
 
 READ_TOOLS = (
@@ -49,50 +50,27 @@ def reset_tenant(token) -> None:
     _current_tenant.reset(token)
 
 
-@dataclass
-class Lead:
-    id: UUID
-    tenant_id: UUID
-    name: str
-    address: str
-    callback: str
-    problem: str
-    urgency: str
-    source: str
-    emergency_code: str | None = None
-    # Owner-entered later. Never filled by a model.
-    dollars_won: Decimal | None = None
-
-
-@dataclass
-class Note:
-    id: UUID
-    tenant_id: UUID
-    body: str
-
-
-@dataclass
-class Store:
-    leads: list[Lead] = field(default_factory=list)
-    notes: list[Note] = field(default_factory=list)
-    customers: list[dict[str, Any]] = field(default_factory=list)
-    jobs: list[dict[str, Any]] = field(default_factory=list)
-
-    def for_tenant(self, tenant_id: UUID) -> list[Lead]:
-        return [lead for lead in self.leads if lead.tenant_id == tenant_id]
-
-
-_store = Store()
-
-
 def store() -> Store:
-    return _store
+    return memory_store()
 
 
 def reset_store() -> None:
-    global _store
-    _store = Store()
+    reset_memory_store()
     reset_packets()
+
+
+def _save_lead(lead: Lead) -> None:
+    if using_database():
+        persist_lead(lead)
+        return
+    store().leads.append(lead)
+
+
+def _save_note(note: Note) -> None:
+    if using_database():
+        persist_note(note)
+        return
+    store().notes.append(note)
 
 
 def _reject_tenant_argument(arguments: dict[str, Any]) -> None:
@@ -163,7 +141,7 @@ def create_lead(
         urgency=urgency,
         source=source,
     )
-    store().leads.append(lead)
+    _save_lead(lead)
     return {"lead_id": str(lead.id), "created": True}
 
 
@@ -204,7 +182,7 @@ def escalate_emergency(
         source=str((captured or {}).get("source") or ""),
         emergency_code=result["trigger"],
     )
-    store().leads.append(lead)
+    _save_lead(lead)
     return {
         "escalated": True,
         "notify": "now",
@@ -227,7 +205,7 @@ def log_note(*, body: str, **ignored: Any) -> dict[str, Any]:
     _reject_tenant_argument(ignored)
     tenant_id = current_tenant()
     note = Note(id=uuid4(), tenant_id=tenant_id, body=body)
-    store().notes.append(note)
+    _save_note(note)
     return {"note_id": str(note.id), "written": True}
 
 

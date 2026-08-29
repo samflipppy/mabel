@@ -35,6 +35,7 @@ Names only. Never put Telnyx, xAI, Jobber, or Stripe keys in a file, an env exam
 
 - `DATABASE_URL` — app role, not superuser, not the migrator
 - `MABEL_MCP_TOKEN_SECRET` — signs short-lived tenant tokens we mint after DID resolution
+- `MABEL_ADMIN_TOKEN` — required on `POST /shops`. Missing config is 503. Wrong token is 401. `onboard_shop()` does not read this.
 - `XAI_WEBHOOK_SECRET` — verifies `webhook-id` / `webhook-timestamp` / `webhook-signature`
 - `XAI_API_KEY` — if missing, the webhook fails closed and Mabel does not join the call
 - `TELNYX_API_KEY` — if missing, the webhook fails closed and Mabel does not text the owner

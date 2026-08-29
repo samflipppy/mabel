@@ -7,7 +7,9 @@ from datetime import time
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
+from mabel.platform.config import ConfigError
 from mabel.platform.tenancy import DuplicateDidError
+from mabel.shops.auth import AdminAuthError, verify_admin_authorization
 from mabel.shops.onboard import onboard_shop
 from mabel.shops.packet import DEFAULT_TIMEZONE, PacketError
 from mabel.shops.store import SHOP_STATUS_DRAFT
@@ -31,6 +33,13 @@ class OnboardShopBody(BaseModel):
 
 @router.post("/shops", status_code=201)
 def create_shop(body: OnboardShopBody, request: Request) -> dict[str, object]:
+    try:
+        verify_admin_authorization(request.headers.get("authorization"))
+    except ConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except AdminAuthError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+
     if "tenant_id" in request.query_params:
         raise HTTPException(
             status_code=400,
