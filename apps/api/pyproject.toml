@@ -9,6 +9,12 @@ description = "Mabel answers the phone. This is the API."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+  "mabel-domain",
+  "mabel-db",
+  "mabel-sms",
+  "mabel-telnyx",
+  "mabel-mcp",
+  "mabel-verticals",
   "fastapi>=0.115",
   "httpx>=0.27",
   "psycopg[binary]>=3.2",
