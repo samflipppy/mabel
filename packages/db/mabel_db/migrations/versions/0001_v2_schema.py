@@ -492,6 +492,16 @@ CREATE INDEX ix_audit_tenant_time ON audit_log (tenant_id, created_at DESC);
 # Every tenant-scoped table, in one loop, so a new table cannot be added
 # without someone noticing it is missing from this list. FORCE is not optional:
 # without it the table owner reads across tenants.
+#
+# DEVIATION from 01-SCHEMA.sql, and a necessary one. The spec writes
+# `current_setting('app.tenant_id', true)::uuid`. That is correct when the
+# setting is *unset* — current_setting returns NULL, the comparison is NULL,
+# the policy matches nothing, and it fails closed exactly as intended. But when
+# the setting is present and empty, `''::uuid` raises `invalid input syntax for
+# type uuid` rather than returning NULL, so the query errors instead of
+# returning zero rows. An empty value arises the moment anything resets the
+# GUC, which `admin_scope()` does deliberately. nullif() collapses both cases
+# onto NULL so the fail-closed behaviour is actually reachable.
 RLS = """
 DO $$
 DECLARE t text;
@@ -506,8 +516,8 @@ BEGIN
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
     EXECUTE format($f$
       CREATE POLICY tenant_isolation ON %I
-        USING (tenant_id = current_setting('app.tenant_id', true)::uuid)
-        WITH CHECK (tenant_id = current_setting('app.tenant_id', true)::uuid)
+        USING (tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid)
+        WITH CHECK (tenant_id = nullif(current_setting('app.tenant_id', true), '')::uuid)
     $f$, t);
     EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON %I TO mabel_app', t);
   END LOOP;
@@ -517,7 +527,7 @@ END $$;
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
 CREATE POLICY tenant_self ON tenants
-  USING (id = current_setting('app.tenant_id', true)::uuid);
+  USING (id = nullif(current_setting('app.tenant_id', true), '')::uuid);
 GRANT SELECT, UPDATE ON tenants TO mabel_app;
 
 -- Global, not tenant-scoped.

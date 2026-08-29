@@ -230,11 +230,23 @@ class TestRowLevelSecurity:
         )
 
     def test_the_policy_fails_closed(self):
-        # current_setting(..., true) returns NULL when unset, so the comparison
-        # is NULL, so the policy matches zero rows. Dropping the `true` makes
-        # it raise instead, and a raise in the wrong place gets caught and
-        # swallowed somewhere upstream.
-        assert "current_setting('app.tenant_id', true)::uuid" in _normalise(MIGRATION_SQL)
+        """Both ways the setting can be absent must land on NULL.
+
+        `current_setting(..., true)` returns NULL when the GUC is unset, the
+        comparison is NULL, and the policy matches zero rows. That is the
+        fail-closed behaviour, and 01-SCHEMA.sql gets it right for that case.
+
+        It does not handle the setting being *present and empty*, where
+        `''::uuid` raises `invalid input syntax for type uuid` and the query
+        errors rather than returning nothing. An empty value is what a reset
+        GUC looks like, and `admin_scope()` produces one deliberately. nullif()
+        collapses both onto NULL. See the DEVIATION note in 0001.
+        """
+        normalised = _normalise(MIGRATION_SQL)
+        assert "current_setting('app.tenant_id', true)" in normalised
+        assert "nullif(current_setting('app.tenant_id', true), '')::uuid" in normalised
+        # And the bare cast is gone, or the empty case is still reachable.
+        assert "current_setting('app.tenant_id', true)::uuid" not in normalised
 
     def test_tenants_sees_only_its_own_row(self):
         assert ("tenant_self", "tenants") in _policies(MIGRATION_SQL)
