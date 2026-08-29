@@ -76,6 +76,51 @@ Work down this list:
 
 ---
 
+## A customer says they got a text they did not want
+
+Or worse, a carrier complaint. Work down this list in order — the first three
+are answerable from the database in under a minute.
+
+```sql
+-- Everything we ever sent that number, and why we thought we could.
+SELECT n.kind, n.body, n.status, n.created_at
+FROM notifications n WHERE n.to_address = '+1216...' ORDER BY n.created_at DESC;
+
+SELECT tenant_id, sms_consent_at, sms_opt_out_at
+FROM contacts WHERE primary_phone = '+1216...';
+```
+
+`sms_consent_at` null means the gate should have refused and did not — that is
+a real bug and worth stopping for. `sms_opt_out_at` set with a later message
+after it is the same. Both are covered by `tests/isolation/test_customer_sms_gate.py`,
+so a failure here means something wrote a `notifications` row without going
+through `enqueue_to_customer`, which is the only thing that checks.
+
+To stop a tenant's customer traffic immediately, without a deploy:
+
+```sql
+UPDATE tenants SET customer_sms_enabled = false, review_requests_enabled = false
+WHERE id = '...';
+```
+
+Queued-but-unsent rows still go out; delete them too if it matters:
+
+```sql
+DELETE FROM notifications
+WHERE tenant_id = '...' AND kind LIKE 'customer_%' AND status = 'queued';
+```
+
+To silence one person everywhere, which is what STOP does and what you should
+do if anyone asks by any other channel:
+
+```sql
+UPDATE contacts SET sms_opt_out_at = now()
+WHERE primary_phone = '+1216...' AND sms_opt_out_at IS NULL;
+```
+
+That deliberately crosses tenants. Someone who has asked to be left alone has
+asked all of them.
+
 ## A tenant says Mabel stopped working
 
 **Almost always call forwarding.** A carrier change, a new handset, or a wrong

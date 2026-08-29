@@ -346,3 +346,78 @@ async def data_summary(user: CurrentUserDep, conn: TenantConn) -> DataExport:
     )
     row: Any = result.mappings().one()
     return DataExport(**{k: int(v) for k, v in row.items()})
+
+
+class CustomerMessaging(BaseModel):
+    """Whether Mabel texts the people who call, and where reviews go."""
+
+    customer_sms_enabled: bool
+    review_requests_enabled: bool
+    review_url: str | None
+
+
+@router.get("/customer-messaging", response_model=CustomerMessaging)
+async def get_customer_messaging(user: CurrentUserDep, conn: TenantConn) -> CustomerMessaging:
+    del user
+    result = await conn.execute(
+        text("SELECT customer_sms_enabled, review_requests_enabled, review_url FROM tenants")
+    )
+    return CustomerMessaging(**dict(result.mappings().one()))
+
+
+@router.put("/customer-messaging", response_model=CustomerMessaging)
+async def set_customer_messaging(
+    body: CustomerMessaging, user: CurrentUserDep, conn: TenantConn
+) -> CustomerMessaging:
+    """Owner only, because switching this on starts sending messages to members
+    of the public in the business's name.
+
+    Two guards that are not merely tidiness:
+
+    Review requests require a URL. A review request with no link is a text that
+    asks for a favour and gives no way to do it, and turning the feature on
+    without one is more likely a half-finished settings page than an intention.
+
+    Review requests require customer SMS. The reverse is fine -- plenty of
+    shops will want confirmations and not want to ask for reviews -- but a
+    review request is a customer message, so the narrower switch cannot be on
+    while the broader one is off. Silently sending nothing would be worse.
+    """
+    if not user.is_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only an owner can change what Mabel sends to customers.",
+        )
+
+    url = (body.review_url or "").strip() or None
+    if body.review_requests_enabled and not url:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Add the link customers should leave a review at first.",
+        )
+    if body.review_requests_enabled and not body.customer_sms_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Review requests are customer texts, so customer texting has to be on.",
+        )
+    if url and not url.startswith("https://"):
+        # A review link is pasted from a browser, so http:// is a typo rather
+        # than a preference, and anything else is not a link at all.
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="That review link should start with https://",
+        )
+
+    result = await conn.execute(
+        text(
+            """
+            UPDATE tenants
+            SET customer_sms_enabled = :sms,
+                review_requests_enabled = :reviews,
+                review_url = :url
+            RETURNING customer_sms_enabled, review_requests_enabled, review_url
+            """
+        ),
+        {"sms": body.customer_sms_enabled, "reviews": body.review_requests_enabled, "url": url},
+    )
+    return CustomerMessaging(**dict(result.mappings().one()))

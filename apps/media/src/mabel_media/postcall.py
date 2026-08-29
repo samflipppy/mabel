@@ -385,3 +385,103 @@ async def _persist(call: CallOutcome, computed: Archived, *, engine: Any) -> Non
                 "cost": computed.voice_cost_cents + computed.telephony_cost_cents,
             },
         )
+
+        await _confirm_to_caller(conn, call, computed)
+
+
+async def _confirm_to_caller(conn: Any, call: CallOutcome, computed: Archived) -> None:
+    """Text the person who just hung up.
+
+    Inside the same transaction as the call row, deliberately. A confirmation
+    that survives a rolled-back call is a text about a job that does not exist;
+    a call row with no confirmation is a caller left holding nothing, which is
+    the thing this feature exists to fix. Either both or neither.
+
+    Nothing here raises. A caller who does not get a text still got a call
+    answered, and a failure to compose a courtesy message must not be what
+    loses the archived recording.
+    """
+    if call.contact_id is None:
+        # No contact means no consent record and nowhere to attribute the
+        # message. Happens when the caller withheld their number.
+        return
+
+    from mabel_db.queries.customer_sms import enqueue_to_customer, may_text
+    from mabel_sms.customer import call_confirmation, emergency_acknowledgement
+
+    try:
+        decision = await may_text(conn, call.contact_id)
+        if not decision.allowed:
+            return
+
+        if computed.outcome == "emergency":
+            # Whether anyone was actually woken, read from what
+            # `enqueue_emergency` wrote rather than assumed. The two wordings
+            # differ precisely here: "the on-call tech has been alerted" is a
+            # claim about the world, and it has to be true.
+            alerted = await _anyone_was_alerted(conn, call.lead_id)
+            body = emergency_acknowledgement(
+                business_name=decision.business_name or "",
+                alerted=alerted,
+                first_contact=decision.first_contact,
+            )
+            kind = "customer_emergency"
+        else:
+            job_type, address = await _lead_details(conn, call.lead_id)
+            body = call_confirmation(
+                business_name=decision.business_name or "",
+                job_type=job_type,
+                service_address=address,
+                first_contact=decision.first_contact,
+            )
+            kind = "customer_confirmation"
+
+        await enqueue_to_customer(
+            conn,
+            tenant_id=call.tenant_id,
+            contact_id=call.contact_id,
+            kind=kind,
+            body=body,
+            lead_id=call.lead_id,
+        )
+    except Exception:  # noqa: BLE001 - a courtesy text must not lose the call
+        logger.exception("could not queue a confirmation for call %s", call.call_id)
+
+
+async def _anyone_was_alerted(conn: Any, lead_id: UUID | None) -> bool:
+    """Did `enqueue_emergency` find anyone to wake?
+
+    Reads the rows it wrote instead of taking a flag, because the flag would
+    have to be passed down four layers and would be wrong on the one path that
+    matters -- a tenant with an empty on-call rotation and a burst pipe.
+    """
+    if lead_id is None:
+        return False
+    from sqlalchemy import text
+
+    result = await conn.execute(
+        text("SELECT 1 FROM notifications WHERE lead_id = :id AND kind = 'emergency' LIMIT 1"),
+        {"id": lead_id},
+    )
+    return result.first() is not None
+
+
+async def _lead_details(conn: Any, lead_id: UUID | None) -> tuple[str | None, str | None]:
+    """The two things a caller worries an AI got wrong, read back to them.
+
+    Both came from the caller's own mouth through Mabel, so neither is money
+    and neither is invented. `value_cents` is not selected here and must not
+    be: nothing a customer receives carries a figure.
+    """
+    if lead_id is None:
+        return None, None
+    from sqlalchemy import text
+
+    result = await conn.execute(
+        text("SELECT job_type, service_address FROM leads WHERE id = :id"),
+        {"id": lead_id},
+    )
+    row = result.mappings().one_or_none()
+    if row is None:
+        return None, None
+    return row["job_type"], row["service_address"]

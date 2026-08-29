@@ -333,11 +333,18 @@ class TestScheduledJobs:
     def test_cron_only_enqueues_and_never_acts(self):
         """Cron runs as a superuser with no tenant context. Every entry must
         insert into job_queue and let the worker do the work through
-        tenant_scope(), where RLS applies. The one exception is pruning
-        webhook receipts, which holds no customer data."""
+        tenant_scope(), where RLS applies.
+
+        Two tables are exempt, and they are named rather than pattern-matched
+        so that adding a third is a deliberate act with a reason attached.
+        Both hold opaque provider identifiers and a timestamp: `webhook_receipts`
+        for idempotency, `call_legs` for which call legs were answered. Neither
+        is tenant-scoped, because both are written before any tenant has been
+        resolved, and neither contains anything belonging to a customer."""
+        exempt = ("webhook_receipts", "call_legs")
         for _name, _schedule, statement in _load(CRON).JOBS:
             lowered = statement.lower()
-            if "webhook_receipts" in lowered:
+            if any(table in lowered for table in exempt):
                 continue
             if "insert into job_queue" in lowered:
                 continue

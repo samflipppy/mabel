@@ -18,16 +18,21 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, PlainTextResponse
+from mabel_db.queries import events
+from mabel_db.queries.customer_sms import opt_out, record_consent
 from mabel_db.tenant import admin_scope, tenant_scope
-from mabel_domain.phone import PhoneError, normalize_e164
-from mabel_sms.compose import stop_confirmation
+from mabel_domain.phone import PhoneError, format_national, normalize_e164
+from mabel_sms.compose import fit as fit_sms
+from mabel_sms.compose import stop_confirmation, to_gsm7
 from mabel_sms.intents import is_carrier_keyword
 from mabel_telnyx.webhooks import TelnyxWebhookError
 from mabel_telnyx.webhooks import verify as verify_telnyx
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncConnection
 
 from mabel_api.sms_router import handle, resolve_sender
 
@@ -82,9 +87,16 @@ async def inbound_sms(request: Request) -> JSONResponse:
         sender = await resolve_sender(conn, from_number)
 
     if sender is None:
-        # Not a number we know. Silence is right: replying tells a stranger
-        # they reached something, and the owner's own number is the only one
-        # this endpoint is for.
+        # Not an owner. It may still be a customer replying to the text we sent
+        # after their call, which is the whole point of sending it -- "sorry we
+        # missed you, reply here" that goes nowhere is worse than not sending.
+        handled = await _handle_customer_reply(
+            from_number=from_number, to_number=_to_number(event), body_text=body_text
+        )
+        if handled:
+            return JSONResponse(content={"status": "ok", "action": "customer_reply"})
+        # Genuinely nobody we know. Silence is right: replying tells a stranger
+        # they reached something.
         logger.info("inbound SMS from an unknown number")
         return JSONResponse(content={"status": "ignored", "reason": "unknown sender"})
 
@@ -197,6 +209,128 @@ def _from_number(event: dict[str, Any]) -> str | None:
         return None
 
 
+async def _handle_customer_reply(
+    *, from_number: str, to_number: str | None, body_text: str, engine: Any = None
+) -> bool:
+    """A customer texting the business back. Returns whether it was placed.
+
+    Three things happen and a fourth deliberately does not.
+
+    It is recorded as an `sms_in` event against the contact, so the reply shows
+    up in their thread in the portal next to the call it followed.
+
+    The owner is texted, because a reply the owner does not see is the same as
+    no reply, and the owner does not sit in the portal.
+
+    Consent is recorded. Someone who texts us has consented at least as clearly
+    as someone who called us.
+
+    **Mabel does not answer.** No auto-reply, no acknowledgement, no "we got
+    your message". Two systems that each reply to every inbound message will
+    text each other until a carrier stops them, and a human answering a text
+    from a customer is the product working, not a gap in it.
+    """
+    if not to_number or not body_text.strip():
+        return False
+
+    async with admin_scope(reason="attribute an inbound customer SMS", engine=engine) as conn:
+        did = await conn.execute(
+            text("SELECT tenant_id, business_name FROM resolve_tenant_by_did(:did)"),
+            {"did": to_number},
+        )
+        row = did.mappings().one_or_none()
+    if row is None:
+        return False
+
+    tenant_id = row["tenant_id"]
+    async with tenant_scope(tenant_id, engine=engine) as conn:
+        found = await conn.execute(
+            text(
+                """
+                SELECT id, display_name FROM contacts
+                WHERE deleted_at IS NULL AND merged_into IS NULL
+                  AND (primary_phone = :phone OR :phone = ANY(phones))
+                ORDER BY last_seen_at DESC LIMIT 1
+                """
+            ),
+            {"phone": from_number},
+        )
+        contact = found.mappings().one_or_none()
+        if contact is None:
+            # Texted the business line without ever calling it. Not our loop to
+            # close: there is no contact, no consent, and no call to reply
+            # about. The owner's own DID is not a general-purpose inbox.
+            return False
+
+        await events.append(
+            conn,
+            tenant_id=tenant_id,
+            kind="sms_in",
+            direction="inbound",
+            contact_id=contact["id"],
+            body=body_text,
+        )
+        await record_consent(conn, contact["id"])
+
+        who = contact["display_name"] or format_national(from_number)
+        await _notify_owner_of_reply(conn, tenant_id=tenant_id, who=who, message=body_text)
+    return True
+
+
+async def _notify_owner_of_reply(
+    conn: AsyncConnection, *, tenant_id: UUID, who: str, message: str
+) -> None:
+    """Tell whoever is on call that a customer wrote in.
+
+    Reuses the on-call rotation rather than blasting every user, because this
+    arrives at whatever hour the customer chose to send it, and waking four
+    people for a text saying "sounds good" is how a shop turns notifications
+    off entirely.
+
+    Queued as `system`, not `emergency`: it is not one, and the kinds drive
+    both the delivery priority and what the owner is allowed to mute.
+    """
+    from mabel_db.queries.notifications import enqueue, oncall_recipients
+
+    body = fit_sms(to_gsm7(f"Text from {who}: {message.strip()}"))
+    for person in await oncall_recipients(conn):
+        await enqueue(
+            conn,
+            tenant_id=tenant_id,
+            kind="system",
+            channel="sms",
+            to_address=person["phone_e164"],
+            body=body,
+            user_id=person["id"],
+        )
+
+
+def _to_number(event: dict[str, Any]) -> str | None:
+    """The DID that was texted, which is what says *which business* this is for.
+
+    An owner's inbound SMS is attributed from the sender, because an owner
+    belongs to a tenant. A customer's cannot be: one homeowner may be a contact
+    of two contractors who both use Mabel, and their number resolves to both.
+    The number they texted resolves to exactly one, by the same unique-DID rule
+    that routes an inbound call.
+
+    Telnyx delivers `to` as a list, because an MMS can have several recipients.
+    Ours never do -- each tenant has one DID -- so the first entry is the one,
+    and a payload shaped otherwise is better ignored than guessed at.
+    """
+    payload = event.get("payload") or {}
+    to = payload.get("to")
+    if isinstance(to, list):
+        to = to[0] if to else None
+    raw = (to or {}).get("phone_number") if isinstance(to, dict) else to
+    if not raw:
+        return None
+    try:
+        return normalize_e164(str(raw))
+    except PhoneError:
+        return None
+
+
 async def _first_time(event_id: str) -> bool:
     """Insert the id, or discover it is already there.
 
@@ -229,6 +363,15 @@ async def _honour_carrier_keyword(from_number: str, body_text: str) -> None:
             {"phone": from_number},
         )
         matches = [dict(row) for row in result.mappings()]
+        # A number can be both: an owner who is also in their own contacts, or
+        # a customer at one tenant and an office manager at another. Both
+        # lookups run, and both act. Stopping one and not the other is the
+        # failure mode that gets a campaign shut down.
+        contacts = await conn.execute(
+            text("SELECT tenant_id, contact_id FROM resolve_contacts_by_phone(:phone)"),
+            {"phone": from_number},
+        )
+        contact_matches = [dict(row) for row in contacts.mappings()]
 
     for match in matches:
         async with tenant_scope(match["tenant_id"]) as conn:
@@ -239,3 +382,7 @@ async def _honour_carrier_keyword(from_number: str, body_text: str) -> None:
                 ),
                 {"id": match["user_id"]},
             )
+
+    for match in contact_matches:
+        async with tenant_scope(match["tenant_id"]) as conn:
+            await opt_out(conn, match["contact_id"])

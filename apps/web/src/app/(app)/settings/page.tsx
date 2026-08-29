@@ -10,9 +10,9 @@
  * status dot next to a phone number.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
 
@@ -43,6 +43,12 @@ interface Account {
   did_e164: string | null;
 }
 
+interface CustomerMessaging {
+  customer_sms_enabled: boolean;
+  review_requests_enabled: boolean;
+  review_url: string | null;
+}
+
 interface DataExport {
   calls: number;
   leads: number;
@@ -63,6 +69,7 @@ export default function SettingsPage() {
       <h1 className="font-serif text-3xl">Settings</h1>
       <Forwarding />
       <AccountSection />
+      <CustomerMessagingSection />
       <BillingLink />
       <DataSection />
     </div>
@@ -241,6 +248,122 @@ function DataSection() {
         To export everything or close the account, email us — we&apos;d rather a
         person handled it than a button did.
       </p>
+    </section>
+  );
+}
+
+/**
+ * What Mabel sends to the people who call.
+ *
+ * Off by default and phrased so that turning it on is a decision rather than a
+ * discovery. The copy says who receives the message and roughly what it says,
+ * because the thing a contractor is actually agreeing to here is a text going
+ * out in their name to a customer they have not spoken to yet.
+ */
+function CustomerMessagingSection() {
+  const client = useQueryClient();
+  const { data } = useQuery({
+    queryKey: ["settings", "customer-messaging"],
+    queryFn: () => api.get<CustomerMessaging>("/api/settings/customer-messaging"),
+  });
+
+  const [form, setForm] = useState<CustomerMessaging | null>(null);
+  // Seeded from the server rather than initialised from it, so a save that
+  // fails leaves the fields as typed instead of silently reverting.
+  useEffect(() => {
+    if (data && !form) setForm(data);
+  }, [data, form]);
+
+  const save = useMutation({
+    mutationFn: (next: CustomerMessaging) =>
+      api.put<CustomerMessaging>("/api/settings/customer-messaging", next),
+    onSuccess: (saved) => {
+      setForm(saved);
+      client.invalidateQueries({ queryKey: ["settings", "customer-messaging"] });
+    },
+  });
+
+  if (!form) {
+    return <div className="h-40 animate-pulse rounded-lg bg-[var(--cream-dark)]" />;
+  }
+
+  return (
+    <section>
+      <h2 className="font-serif text-2xl">Texting your customers</h2>
+      <div className="mt-3 space-y-4 rounded-lg border border-[var(--line)] bg-white p-5">
+        <label className="flex gap-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={form.customer_sms_enabled}
+            onChange={(e) =>
+              setForm({ ...form, customer_sms_enabled: e.target.checked })
+            }
+          />
+          <span>
+            <span className="text-base">Text people back after they call</span>
+            <span className="block text-sm text-[var(--taupe)]">
+              A short message confirming what Mabel heard — the job and the
+              address — so they stop calling around while they wait.
+            </span>
+          </span>
+        </label>
+
+        <label className="flex gap-3">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={form.review_requests_enabled}
+            onChange={(e) =>
+              setForm({ ...form, review_requests_enabled: e.target.checked })
+            }
+          />
+          <span>
+            <span className="text-base">Ask for a review after a won job</span>
+            <span className="block text-sm text-[var(--taupe)]">
+              Sent a couple of days after you mark a job won. Never to anyone
+              who has replied STOP.
+            </span>
+          </span>
+        </label>
+
+        <div>
+          <label className="block text-sm text-[var(--taupe)]" htmlFor="review-url">
+            Your review link
+          </label>
+          <input
+            id="review-url"
+            type="url"
+            placeholder="https://g.page/r/..."
+            className="mt-1 w-full rounded border border-[var(--line)] p-2 text-base"
+            value={form.review_url ?? ""}
+            onChange={(e) => setForm({ ...form, review_url: e.target.value })}
+          />
+        </div>
+
+        {save.isError && (
+          <p className="text-sm text-red-700">{(save.error as Error).message}</p>
+        )}
+
+        <button
+          type="button"
+          className="rounded bg-[var(--ink)] px-4 py-2 text-base text-white disabled:opacity-50"
+          disabled={save.isPending}
+          onClick={() => save.mutate(form)}
+        >
+          {save.isPending ? "Saving…" : "Save"}
+        </button>
+
+        <p className="text-sm text-[var(--taupe)]">
+          {/* The honest version. A contractor who turns this on and hears
+              nothing back has no way to tell that a carrier is dropping the
+              messages, so the screen says it rather than letting them find
+              out from a customer. */}
+          Texts to customers go out under a registered business campaign. If
+          you have just signed up, give us a day to get yours approved before
+          switching this on.
+        </p>
+      </div>
     </section>
   );
 }

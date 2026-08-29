@@ -19,6 +19,13 @@ Set it up locally with:
 CI runs the same thing as a service container. See docs/BLOCKED.md #1 for what
 is still missing before these run against a Supabase-shaped database.
 
+**One pytest session per database.** The `schema` fixture drops and recreates
+`public` when the session starts. Two sessions pointed at the same
+`TEST_DATABASE_URL` will pull the schema out from under each other, and what
+you see is a scatter of unique-violation and missing-relation errors in tests
+that pass perfectly well on their own. If you want to run two suites at once,
+give the second one its own database.
+
 Anything that requests `engine`, `app_engine`, `two_tenants` or `shop` is
 skipped when there is no database, rather than failing for a reason unrelated
 to the code.
@@ -83,8 +90,9 @@ def _load_sql() -> str:
 
     0002 is skipped: it is pg_cron, which a scratch Postgres does not have and
     which none of these tests exercise. 0003, 0004 and 0005 are included: they
-    carry the three resolution functions, without which no inbound call can be
-    routed, no inbound SMS attributed, and no portal session resolved.
+    carry the resolution functions, without which no inbound call can be routed,
+    no inbound SMS attributed, no portal session resolved and no STOP from a
+    customer honoured. 0007 adds the consent columns those sends are gated on.
     """
     parts = [
         "\n".join(_module(MIGRATIONS / "0001_v2_schema.py").SECTIONS),
@@ -92,6 +100,9 @@ def _load_sql() -> str:
         _module(MIGRATIONS / "0004_sms_sender_resolution.py").FUNCTION,
         _module(MIGRATIONS / "0005_portal_session_resolution.py").FUNCTION,
         _module(MIGRATIONS / "0006_stripe_customer_resolution.py").FUNCTION,
+        _module(MIGRATIONS / "0007_customer_messaging.py").COLUMNS,
+        _module(MIGRATIONS / "0007_customer_messaging.py").FUNCTION,
+        _module(MIGRATIONS / "0008_call_legs.py").TABLE,
     ]
     return "\n".join(parts)
 

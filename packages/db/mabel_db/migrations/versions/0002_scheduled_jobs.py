@@ -85,6 +85,33 @@ JOBS: tuple[tuple[str, str, str], ...] = (
         """,
     ),
     (
+        "review-sweep",
+        "30 15 * * *",
+        # Won leads, two days old, once each. 3:30pm rather than the small
+        # hours: a review request that lands at 4am gets deleted with the rest
+        # of the overnight junk, and unlike an emergency alert there is no
+        # reason for this one to arrive at a bad time.
+        #
+        # The 14-day floor stops a shop switching the feature on and immediately
+        # texting every customer it has ever won, which reads as a blast, gets
+        # reported as one, and is the fastest way to lose a campaign.
+        """
+        INSERT INTO job_queue (tenant_id, kind, payload)
+        SELECT DISTINCT l.tenant_id, 'review_request', jsonb_build_object('lead_id', l.id)
+        FROM leads l
+        JOIN tenants t ON t.id = l.tenant_id
+        WHERE l.status = 'won'
+          AND t.status IN ('trial','active')
+          AND t.review_requests_enabled
+          AND t.review_url IS NOT NULL
+          AND l.won_at < now() - interval '2 days'
+          AND l.won_at > now() - interval '14 days'
+          AND NOT EXISTS (
+            SELECT 1 FROM notifications n
+            WHERE n.lead_id = l.id AND n.kind = 'customer_review');
+        """,
+    ),
+    (
         "monthly-reports",
         "0 8 1 * *",
         """
@@ -113,6 +140,15 @@ JOBS: tuple[tuple[str, str, str], ...] = (
         # tolerance. This is the one cron entry that deletes, and what it
         # deletes is a hash with no customer data in it.
         "DELETE FROM webhook_receipts WHERE received_at < now() - interval '10 minutes';",
+    ),
+    (
+        "prune-call-legs",
+        "20 * * * *",
+        # Answered-leg markers. Kept 24 hours rather than the receipts table's
+        # ten minutes, because the retention here has to outlast a phone call
+        # and not a webhook retry -- pruning at ten minutes would make every
+        # call longer than that look like a missed one. See revision 0008.
+        "DELETE FROM call_legs WHERE seen_at < now() - interval '24 hours';",
     ),
 )
 

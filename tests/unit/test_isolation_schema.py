@@ -45,6 +45,7 @@ def test_the_resolution_functions_are_included():
         "resolve_user_by_phone",
         "resolve_user_by_supabase_uid",
         "resolve_tenant_by_stripe_customer",
+        "resolve_contacts_by_phone",
     ):
         assert f"CREATE OR REPLACE FUNCTION {name}" in SQL, f"{name} is missing"
 
@@ -61,7 +62,7 @@ def test_every_definer_function_pins_its_search_path():
     pins = [
         line for line in SQL.splitlines() if line.strip() == "SET search_path = public, pg_temp"
     ]
-    assert len(declarations) == 4, f"expected four definer functions, found {len(declarations)}"
+    assert len(declarations) == 5, f"expected five definer functions, found {len(declarations)}"
     assert len(pins) == len(declarations)
 
 

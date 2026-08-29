@@ -72,9 +72,10 @@ def create_app() -> FastAPI:
 
     # Webhooks first. They authenticate by signature, and mounting them above
     # the portal API keeps a mistake in the session dependency away from them.
-    from mabel_api.webhooks import stripe, telnyx
+    from mabel_api.webhooks import stripe, telnyx, telnyx_calls
 
     app.include_router(telnyx.router)
+    app.include_router(telnyx_calls.router)
     app.include_router(stripe.router)
 
     from mabel_mcp.server import router as mcp_router
