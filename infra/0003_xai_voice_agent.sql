@@ -1,7 +1,7 @@
 -- Draft only. Sam runs this. A bot does not.
 -- Per-shop xAI Voice Agent id on tenants. Nullable: onboard records it when
 -- we have it. This PR does not call xAI and does not take an agent live.
--- Column rides existing tenants RLS. No DELETE. No money. Not a numeric type.
+-- Column rides existing tenants RLS. No DELETE. No money. This column is text.
 
 BEGIN;
 

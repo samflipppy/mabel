@@ -18,10 +18,10 @@ MABEL_MCP_TOOLS = (
     "lookup_customer",
     "get_service_area",
     "check_availability",
+    "get_job_history",
     "create_lead",
     "escalate_emergency",
     "book_estimate",
-    "get_job_history",
     "log_note",
 )
 

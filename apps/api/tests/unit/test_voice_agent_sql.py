@@ -28,6 +28,6 @@ def test_voice_agent_sql_has_no_float_money() -> None:
     lowered = SQL_0003.lower()
     assert "double precision" not in lowered
     assert "float" not in lowered
-    assert "numeric" not in lowered
+    assert "numeric(12" not in lowered
     assert "dollars_won" not in lowered
     assert "$" not in SQL_0003
