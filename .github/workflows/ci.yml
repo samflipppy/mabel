@@ -87,6 +87,13 @@ jobs:
       - name: pytest tests/property
         run: uv run pytest tests/property -q
 
+      - name: pytest tests/simulation
+        # Needs no database, no model and no network: a scenario supplies what
+        # the caller said and what the model decided, and everything downstream
+        # is real code. 04-REPO.md schedules it nightly against staging; it
+        # runs here too because it is cheap and catches real regressions.
+        run: uv run pytest tests/simulation -q
+
       - name: pytest tests/isolation
         run: uv run pytest tests/isolation -q
 

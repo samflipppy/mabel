@@ -1,0 +1,27 @@
+{
+  "scenario_id": "electrical_burning_smell",
+  "note": "A burning smell is a 911 call before it is a service call.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "electrical",
+  "script": [
+    {
+      "caller": "There's a burning smell coming from the outlet."
+    },
+    {
+      "mabel": "Leave the building and call 911. Don't touch the outlet."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "nature": "burning smell from an outlet"
+      }
+    }
+  ],
+  "expect": {
+    "escalated": true,
+    "outcome": "emergency"
+  }
+}

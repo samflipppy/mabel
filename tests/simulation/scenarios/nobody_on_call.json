@@ -1,0 +1,29 @@
+{
+  "scenario_id": "nobody_on_call",
+  "note": "She must not imply a truck is moving when nobody was reached.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "My pipe burst."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "nature": "burst pipe"
+      }
+    },
+    {
+      "mabel": "I've flagged this as urgent and someone will call you back."
+    }
+  ],
+  "expect": {
+    "escalated": true,
+    "oncall_reached": false,
+    "outcome": "emergency"
+  },
+  "oncall_available": false
+}

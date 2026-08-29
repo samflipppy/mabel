@@ -1,0 +1,47 @@
+{
+  "scenario_id": "books_an_estimate",
+  "note": "She may only offer a window the calendar gave her.",
+  "started_at": "2026-10-14T23:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "Can someone come and quote for a repipe?"
+    },
+    {
+      "tool": "check_availability",
+      "args": {
+        "job_type": "repipe"
+      }
+    },
+    {
+      "mabel": "I've got Thursday morning."
+    },
+    {
+      "caller": "That works."
+    },
+    {
+      "tool": "book_estimate",
+      "args": {
+        "slot_id": "slot_aaa",
+        "name": "Pat Example",
+        "phone": "216-555-0100"
+      }
+    }
+  ],
+  "expect": {
+    "tools_called": [
+      "check_availability",
+      "book_estimate"
+    ],
+    "outcome": "hangup"
+  },
+  "slots": [
+    {
+      "slot_id": "slot_aaa",
+      "day": "2026-10-15",
+      "label": "morning",
+      "spoken": "Thursday morning"
+    }
+  ]
+}

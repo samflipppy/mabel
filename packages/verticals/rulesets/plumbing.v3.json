@@ -65,6 +65,8 @@
       "label": "Water near the electrical panel, wake me and tell them to get out",
       "phrases": [
         "near the panel",
+        "near the electrical panel",
+        "near the breaker panel",
         "water and sparks",
         "water near electrical",
         "water in the breaker",
@@ -123,6 +125,7 @@
     "plumbing_slow_drain_2am.json",
     "plumbing_sewage_backup.json",
     "plumbing_water_near_panel.json",
+    "plumbing_water_near_electrical_panel.json",
     "plumbing_no_hot_water.json",
     "plumbing_active_flooding_model_missed.json",
     "plumbing_override_water_heater_wakes_me.json",

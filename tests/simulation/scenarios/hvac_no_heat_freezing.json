@@ -1,0 +1,27 @@
+{
+  "scenario_id": "hvac_no_heat_freezing",
+  "note": "Same words as a June call, different weather, different answer.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "hvac",
+  "script": [
+    {
+      "caller": "We've got no heat and it's ten degrees out."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "nature": "no heat, ten degrees outside"
+      }
+    }
+  ],
+  "expect": {
+    "escalated": true,
+    "outcome": "emergency"
+  },
+  "context": {
+    "outdoor_temp_f": 10
+  }
+}

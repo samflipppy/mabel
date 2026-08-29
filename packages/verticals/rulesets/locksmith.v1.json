@@ -10,9 +10,13 @@
       "label": "Child or animal locked in a car or a house, wake me and tell them to call 911",
       "phrases": [
         "baby is locked in",
+        "baby's locked in",
         "child is locked in",
+        "child's locked in",
         "kid locked in the car",
+        "kid's locked in",
         "dog is locked in",
+        "dog's locked in",
         "pet locked in the car"
       ],
       "safety_script": "advise_call_911_child_or_pet"
@@ -90,6 +94,7 @@
   ],
   "fixtures": [
     "locksmith_child_in_car.json",
+    "locksmith_child_contraction.json",
     "locksmith_locked_out.json",
     "locksmith_broken_key.json",
     "locksmith_rekey_routine.json",
