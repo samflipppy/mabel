@@ -1,0 +1,30 @@
+{
+  "scenario_id": "unusable_callback_number",
+  "note": "A lead with a dead number is a lead he cannot act on.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "Just call the house."
+    },
+    {
+      "tool": "create_lead",
+      "args": {
+        "name": "Pat",
+        "phone": "the house",
+        "job_type": "leak",
+        "urgency": "routine"
+      }
+    },
+    {
+      "mabel": "Sorry, could I take that number again, digit by digit?"
+    }
+  ],
+  "expect": {
+    "tools_called": [
+      "create_lead"
+    ],
+    "outcome": "hangup"
+  }
+}

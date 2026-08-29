@@ -1,0 +1,35 @@
+{
+  "scenario_id": "water_near_panel",
+  "note": "Safety first. She tells them to get out before she finishes the form.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "There's water running down the wall near the electrical panel."
+    },
+    {
+      "mabel": "Leave the building and call 911 now. Don't touch the panel."
+    },
+    {
+      "caller": "Okay, I'm outside."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "nature": "water at the electrical panel",
+        "caller_is_safe": true
+      }
+    }
+  ],
+  "expect": {
+    "tools_called": [
+      "escalate_emergency"
+    ],
+    "escalated": true,
+    "outcome": "emergency",
+    "qa_flags": []
+  }
+}

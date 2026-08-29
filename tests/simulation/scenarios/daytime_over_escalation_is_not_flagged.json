@@ -1,0 +1,25 @@
+{
+  "scenario_id": "daytime_over_escalation_is_not_flagged",
+  "note": "At 2pm an over-eager escalation costs a phone call, not the account.",
+  "started_at": "2026-10-14T18:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "My drain's slow."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "nature": "slow drain"
+      }
+    }
+  ],
+  "expect": {
+    "escalated": true,
+    "qa_flags": [],
+    "outcome": "emergency"
+  }
+}

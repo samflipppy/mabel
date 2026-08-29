@@ -1,0 +1,39 @@
+{
+  "scenario_id": "no_availability",
+  "note": "An honest empty list. She takes details rather than inventing a time.",
+  "started_at": "2026-10-14T23:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "When can someone come out?"
+    },
+    {
+      "tool": "check_availability",
+      "args": {
+        "job_type": "estimate"
+      }
+    },
+    {
+      "mabel": "I don't have a window to offer. Someone will call to arrange one."
+    },
+    {
+      "tool": "create_lead",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "job_type": "estimate",
+        "urgency": "routine"
+      }
+    }
+  ],
+  "expect": {
+    "tools_called": [
+      "check_availability",
+      "create_lead"
+    ],
+    "qa_flags": [],
+    "outcome": "lead"
+  },
+  "slots": []
+}

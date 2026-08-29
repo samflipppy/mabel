@@ -1,0 +1,28 @@
+{
+  "scenario_id": "hvac_gas_smell",
+  "note": "Out of the building first, details second.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "hvac",
+  "script": [
+    {
+      "caller": "I can smell gas near the furnace."
+    },
+    {
+      "mabel": "Leave the building now and call the gas company from outside."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "nature": "gas smell at the furnace",
+        "caller_is_safe": false
+      }
+    }
+  ],
+  "expect": {
+    "escalated": true,
+    "outcome": "emergency"
+  }
+}

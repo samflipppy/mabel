@@ -1,0 +1,33 @@
+{
+  "scenario_id": "will_not_give_an_address",
+  "note": "Some people won't. Take what you can get rather than losing the lead.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "I need someone out but I'm not giving my address over the phone."
+    },
+    {
+      "mabel": "That's fine. Can I take a name and a number for the callback?"
+    },
+    {
+      "caller": "Pat, 216-555-0100."
+    },
+    {
+      "tool": "create_lead",
+      "args": {
+        "name": "Pat",
+        "phone": "216-555-0100",
+        "job_type": "unspecified",
+        "urgency": "routine"
+      }
+    }
+  ],
+  "expect": {
+    "tools_called": [
+      "create_lead"
+    ],
+    "outcome": "lead"
+  }
+}

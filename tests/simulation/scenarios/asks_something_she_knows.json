@@ -1,0 +1,33 @@
+{
+  "scenario_id": "asks_something_she_knows",
+  "note": "Answered from the owner's own Q&A, word for word.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 45,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "Do you do drywall repair?"
+    },
+    {
+      "tool": "answer_question",
+      "args": {
+        "question": "do you do drywall repair"
+      }
+    },
+    {
+      "mabel": "Yes, as part of a painting job."
+    }
+  ],
+  "expect": {
+    "tools_called": [
+      "answer_question"
+    ],
+    "outcome": "hangup"
+  },
+  "knowledge": [
+    {
+      "question": "Do you do drywall repair?",
+      "answer": "Yes, as part of a painting job."
+    }
+  ]
+}

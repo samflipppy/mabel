@@ -70,6 +70,13 @@ class CallOutcome:
     conversation_items: int = 1
     recording_bytes: bytes | None = None
     telephony_cost_cents: int = 0
+    # Facts the ruleset needs that are not in the transcript: the outdoor
+    # temperature, whether there is a vulnerable occupant. "No heat" is an
+    # emergency at ten degrees and a routine call in June, and the temperature
+    # is something we look up rather than something the caller says. Without
+    # this the backstop could never agree with a weather-gated escalation, so
+    # every one of them read as an over-escalation.
+    context: dict[str, Any] = field(default_factory=dict)
 
     @property
     def duration_sec(self) -> int:
@@ -149,7 +156,7 @@ def build_scenario(call: CallOutcome) -> dict[str, Any]:
             if str(turn.get("role", "")).lower() not in {"assistant", "mabel"}
         ],
         "captured": {},
-        "context": {},
+        "context": dict(call.context),
     }
 
 
