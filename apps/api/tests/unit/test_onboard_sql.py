@@ -11,15 +11,9 @@ SQL_0005 = (REPO_ROOT / "infra" / "0005_recap_send.sql").read_text(encoding="utf
 
 
 def test_rls_with_check_lets_insert_under_set_local() -> None:
-    tenant_check = (
-        "id = NULLIF(current_setting('app.tenant_id', true), '')::uuid"
-    )
-    did_check = (
-        "tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid"
-    )
-    zip_check = (
-        "tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid"
-    )
+    tenant_check = "id = NULLIF(current_setting('app.tenant_id', true), '')::uuid"
+    did_check = "tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid"
+    zip_check = "tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid"
     assert f"WITH CHECK ({tenant_check})" in SQL_0001
     assert f"WITH CHECK ({did_check})" in SQL_0001
     assert f"WITH CHECK ({zip_check})" in SQL_0002

@@ -97,7 +97,7 @@ def test_ci_workflow_has_no_secrets_or_deploy() -> None:
     assert "XAI_API_KEY" not in text
     assert "JOBBER" not in text
     assert "STRIPE" not in text
-    assert "python-version: \"3.12\"" in text or "python-version: '3.12'" in text
+    assert 'python-version: "3.12"' in text or "python-version: '3.12'" in text
     assert "packages/verticals" in text
     assert "apps/api[dev]" in text
     assert "pytest" in lowered

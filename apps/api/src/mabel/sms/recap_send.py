@@ -32,8 +32,7 @@ from mabel.sms.notify import (
 from mabel.sms.recap import RecapItem, recap_queue, replace_recap
 
 RECAP_SMS_TEMPLATE = (
-    "{shop_name} overnight recap: {lead_count} {lead_word}, "
-    "{emergency_count} {emergency_word}."
+    "{shop_name} overnight recap: {lead_count} {lead_word}, {emergency_count} {emergency_word}."
 )
 
 PURPOSE_RECAP = "recap_7am"
@@ -92,9 +91,7 @@ def _due_items(now: datetime) -> list[RecapItem]:
     return list(found.values())
 
 
-def _send_one_shop(
-    tenant_id: UUID, items: list[RecapItem], now: datetime
-) -> RecapSendResult:
+def _send_one_shop(tenant_id: UUID, items: list[RecapItem], now: datetime) -> RecapSendResult:
     packet = packet_for(tenant_id)
     leads = overnight_leads(tenant_id, now=now)
     lead_count = len(leads)

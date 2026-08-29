@@ -308,9 +308,7 @@ def test_send_due_recaps_texts_owner_not_customer(monkeypatch, fake_telnyx_clien
     assert attempts[-1].to == OWNER
 
 
-def test_send_due_recaps_without_telnyx_keeps_queue_item(
-    monkeypatch, fake_telnyx_client
-) -> None:
+def test_send_due_recaps_without_telnyx_keeps_queue_item(monkeypatch, fake_telnyx_client) -> None:
     monkeypatch.delenv("TELNYX_API_KEY", raising=False)
     tenant_id = uuid4()
     register_packet(_packet(tenant_id))

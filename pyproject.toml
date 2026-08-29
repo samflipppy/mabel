@@ -7,6 +7,9 @@ dependencies = [
   "mabel-domain",
   "mabel-verticals",
   "mabel-db",
+  "mabel-xai",
+  "mabel-mcp",
+  "mabel-media",
 ]
 
 [dependency-groups]
@@ -24,6 +27,9 @@ members = ["packages/*", "apps/api", "apps/media", "apps/worker"]
 mabel-domain = { workspace = true }
 mabel-verticals = { workspace = true }
 mabel-db = { workspace = true }
+mabel-xai = { workspace = true }
+mabel-mcp = { workspace = true }
+mabel-media = { workspace = true }
 
 [tool.ruff]
 line-length = 100
