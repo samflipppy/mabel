@@ -45,6 +45,9 @@ async def owners(app_engine: AsyncEngine, two_tenants: tuple[UUID, UUID]):
                 ),
                 {"t": tenant_id, "e": email, "p": phone},
             )
+            # two_tenants already seeded a lead. FU lists every waiting
+            # row; these cases are about Henderson alone.
+            await conn.execute(text("DELETE FROM leads"))
             await conn.execute(
                 text(
                     "INSERT INTO leads (tenant_id, caller_name, job_type, urgency, status) "

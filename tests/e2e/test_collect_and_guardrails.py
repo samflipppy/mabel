@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 from mabel_api.main import create_app
+from mabel_mcp.tools.capture import compose_emergency_sms
 from mabel_media.prompt import PromptInputs, render_prompt
 from mabel_media.qa import QaInputs, review
 from mabel_verticals.loader import load_latest
@@ -81,6 +82,18 @@ def test_qa_flags_an_invented_arrival():
         )
     )
     assert "promised_arrival" in flags
+
+
+def test_the_emergency_sms_composer_never_takes_a_dollar_figure():
+    body = compose_emergency_sms(
+        name="Pat",
+        phone="+12165550177",
+        address="100 Example Ave",
+        nature="burst pipe",
+        caller_is_safe=True,
+    )
+    assert "$" not in body
+    assert "dollar" not in body.lower()
 
 
 def test_qa_does_not_flag_an_arrival_that_came_from_the_calendar():

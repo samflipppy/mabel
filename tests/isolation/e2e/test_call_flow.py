@@ -9,7 +9,6 @@ import pytest
 from mabel_db.tenant import tenant_scope
 from mabel_mcp.registry import dispatch
 from mabel_media.postcall import CallOutcome, finalize
-from mabel_mcp.tools.capture import compose_emergency_sms
 from mabel_telnyx.client import FakeTelnyxClient
 from mabel_worker.jobs import morning_recap, send_notification
 from mabel_worker.queue import Job
@@ -150,17 +149,6 @@ class TestEmergencyGoesToTheOwner:
         await send_notification.run(_job(alpha, "send_notification"), app_engine, client=fake)
         assert [m.to_e164 for m in fake.sent] == [OWNER]
         assert CALLER not in {m.to_e164 for m in fake.sent}
-
-    def test_the_emergency_sms_composer_never_takes_a_dollar_figure(self):
-        body = compose_emergency_sms(
-            name="Pat",
-            phone=CALLER,
-            address="100 Example Ave",
-            nature="burst pipe",
-            caller_is_safe=True,
-        )
-        assert "$" not in body
-        assert "dollar" not in body.lower()
 
 
 class TestMorningRecap:

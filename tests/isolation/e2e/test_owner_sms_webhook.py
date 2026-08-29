@@ -8,8 +8,6 @@ from __future__ import annotations
 from uuid import UUID
 
 import pytest
-from fastapi.testclient import TestClient
-from mabel_api.main import create_app
 from mabel_db.tenant import tenant_scope
 from sqlalchemy import text
 
@@ -55,33 +53,30 @@ def telnyx_env(monkeypatch, bind_db):
 
 
 class TestSignatureAndIdempotency:
-    async def test_unsigned_is_401(self, telnyx_env, owners):
+    async def test_unsigned_is_401(self, client, telnyx_env, owners):
         del owners
         _key, _engine = telnyx_env
-        client = TestClient(create_app())
         body = telnyx_sms_body(event_id="evt_unsigned", from_number=ALPHA_PHONE, text="FU")
-        response = client.post("/webhooks/telnyx/sms", content=body)
+        response = await client.post("/webhooks/telnyx/sms", content=body)
         assert response.status_code == 401
 
-    async def test_stale_is_401(self, telnyx_env, owners):
+    async def test_stale_is_401(self, client, telnyx_env, owners):
         del owners
         key, _engine = telnyx_env
-        client = TestClient(create_app())
         body = telnyx_sms_body(event_id="evt_stale", from_number=ALPHA_PHONE, text="FU")
         headers = sign_telnyx(body, key, at=1_800_000_000.0 - 400)
-        response = client.post("/webhooks/telnyx/sms", content=body, headers=headers)
+        response = await client.post("/webhooks/telnyx/sms", content=body, headers=headers)
         assert response.status_code == 401
 
-    async def test_the_same_webhook_id_is_not_acted_on_twice(self, telnyx_env, owners):
+    async def test_the_same_webhook_id_is_not_acted_on_twice(self, client, telnyx_env, owners):
         alpha, _beta = owners
         key, engine = telnyx_env
-        client = TestClient(create_app())
         body = telnyx_sms_body(
             event_id="evt_won_once", from_number=ALPHA_PHONE, text="WON HENDERSON 3800"
         )
         headers = sign_telnyx(body, key)
-        first = client.post("/webhooks/telnyx/sms", content=body, headers=headers)
-        second = client.post("/webhooks/telnyx/sms", content=body, headers=headers)
+        first = await client.post("/webhooks/telnyx/sms", content=body, headers=headers)
+        second = await client.post("/webhooks/telnyx/sms", content=body, headers=headers)
         assert first.status_code == 200
         assert first.json()["action"] == "marked_won"
         assert second.status_code == 200
@@ -93,14 +88,17 @@ class TestSignatureAndIdempotency:
 
 
 class TestIntentsStayInTheirTenant:
-    async def test_won_writes_integer_cents_on_the_senders_lead_only(self, telnyx_env, owners):
+    async def test_won_writes_integer_cents_on_the_senders_lead_only(
+        self, client, telnyx_env, owners
+    ):
         alpha, beta = owners
         key, engine = telnyx_env
-        client = TestClient(create_app())
         body = telnyx_sms_body(
             event_id="evt_won", from_number=ALPHA_PHONE, text="WON HENDERSON 3800"
         )
-        response = client.post("/webhooks/telnyx/sms", content=body, headers=sign_telnyx(body, key))
+        response = await client.post(
+            "/webhooks/telnyx/sms", content=body, headers=sign_telnyx(body, key)
+        )
         assert response.status_code == 200
         assert response.json()["action"] == "marked_won"
 
@@ -123,16 +121,17 @@ class TestIntentsStayInTheirTenant:
         assert theirs["status"] == "new"
         assert theirs["value_cents"] is None
 
-    async def test_lost_records_the_reason(self, telnyx_env, owners):
+    async def test_lost_records_the_reason(self, client, telnyx_env, owners):
         alpha, _beta = owners
         key, engine = telnyx_env
-        client = TestClient(create_app())
         body = telnyx_sms_body(
             event_id="evt_lost",
             from_number=ALPHA_PHONE,
             text="LOST HENDERSON went with someone else",
         )
-        response = client.post("/webhooks/telnyx/sms", content=body, headers=sign_telnyx(body, key))
+        response = await client.post(
+            "/webhooks/telnyx/sms", content=body, headers=sign_telnyx(body, key)
+        )
         assert response.status_code == 200
         assert response.json()["action"] == "marked_lost"
 
@@ -145,7 +144,7 @@ class TestIntentsStayInTheirTenant:
         assert row["status"] == "lost"
         assert "someone else" in row["lost_reason"]
 
-    async def test_recall_does_not_invent_a_dollar_figure(self, telnyx_env, owners):
+    async def test_recall_does_not_invent_a_dollar_figure(self, client, telnyx_env, owners):
         alpha, _beta = owners
         key, engine = telnyx_env
         async with tenant_scope(alpha, engine=engine) as conn:
@@ -158,24 +157,26 @@ class TestIntentsStayInTheirTenant:
                 ),
                 {"t": alpha},
             )
-        client = TestClient(create_app())
         body = telnyx_sms_body(
             event_id="evt_recall",
             from_number=ALPHA_PHONE,
             text="anything about a water heater",
         )
-        response = client.post("/webhooks/telnyx/sms", content=body, headers=sign_telnyx(body, key))
+        response = await client.post(
+            "/webhooks/telnyx/sms", content=body, headers=sign_telnyx(body, key)
+        )
         assert response.status_code == 200
         # The reply is queued, not returned as the SMS body. The action is recall.
         assert "$" not in response.text
 
-    async def test_unknown_sender_is_ignored(self, telnyx_env, owners):
+    async def test_unknown_sender_is_ignored(self, client, telnyx_env, owners):
         del owners
         key, _engine = telnyx_env
-        client = TestClient(create_app())
         body = telnyx_sms_body(
             event_id="evt_stranger", from_number="+12165559999", text="WON HENDERSON 3800"
         )
-        response = client.post("/webhooks/telnyx/sms", content=body, headers=sign_telnyx(body, key))
+        response = await client.post(
+            "/webhooks/telnyx/sms", content=body, headers=sign_telnyx(body, key)
+        )
         assert response.status_code == 200
         assert response.json()["reason"] == "unknown sender"

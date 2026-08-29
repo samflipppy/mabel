@@ -6,10 +6,14 @@ mabel_app pool. Do not point them at Fly or Supabase.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from uuid import UUID, uuid4
 
 import jwt
 import pytest
+from httpx import ASGITransport, AsyncClient
+from mabel_api.main import create_app
 from sqlalchemy import text
 
 from mabel_db.tenant import tenant_scope
@@ -31,6 +35,27 @@ def portal_secret(monkeypatch):
     monkeypatch.setenv("SUPABASE_JWT_SECRET", JWT_SECRET)
     monkeypatch.setenv("MCP_TOKEN_SIGNING_KEY", MCP_KEY)
     return JWT_SECRET
+
+
+@asynccontextmanager
+async def async_app_client() -> AsyncIterator[AsyncClient]:
+    """HTTP against the portal on the same loop as the scratch-DB pool.
+
+    Sync `TestClient` opens its own loop. The session-scoped engine's
+    connections then raise "attached to a different loop" and every
+    later isolation test is poisoned.
+    """
+    async with AsyncClient(
+        transport=ASGITransport(app=create_app()),
+        base_url="http://mabel.test",
+    ) as client:
+        yield client
+
+
+@pytest.fixture
+async def client() -> AsyncIterator[AsyncClient]:
+    async with async_app_client() as api:
+        yield api
 
 
 @pytest.fixture

@@ -6,35 +6,29 @@ from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
-from fastapi.testclient import TestClient
-from mabel_api.main import create_app
 from mabel_db.tenant import tenant_scope
 from mabel_media.postcall import CallOutcome, finalize
 from sqlalchemy import text
 
 from tests.e2e.fakes import auth_header
+from tests.isolation.e2e.conftest import async_app_client
 
 pytestmark = pytest.mark.asyncio
 
 NOW = datetime(2026, 10, 14, 16, 0, tzinfo=UTC)
 
 
-@pytest.fixture
-def client(portal_owners):
-    del portal_owners
-    return TestClient(create_app())
-
-
 class TestAuth:
     async def test_no_bearer_is_401(self, client, portal_owners):
         del portal_owners
-        assert client.get("/api/dashboard").status_code == 401
+        response = await client.get("/api/dashboard")
+        assert response.status_code == 401
 
     async def test_a_forged_token_is_401(self, client, portal_owners, monkeypatch):
         del portal_owners
         monkeypatch.setenv("SUPABASE_JWT_SECRET", "some-other-secret-not-the-real-one")
         # Recreate so the app reads the other secret... deps read env each call.
-        response = client.get(
+        response = await client.get(
             "/api/dashboard",
             headers=auth_header("not-a-jwt"),
         )
@@ -43,8 +37,8 @@ class TestAuth:
     async def test_unconfigured_auth_is_503(self, portal_owners, monkeypatch):
         del portal_owners
         monkeypatch.delenv("SUPABASE_JWT_SECRET", raising=False)
-        client = TestClient(create_app())
-        response = client.get("/api/dashboard", headers=auth_header("whatever"))
+        async with async_app_client() as fresh:
+            response = await fresh.get("/api/dashboard", headers=auth_header("whatever"))
         assert response.status_code == 503
         assert "not configured" in response.json()["detail"]
 
@@ -74,10 +68,12 @@ class TestDashboardCallsLeadsSettings:
                 {"t": beta},
             )
 
-        alpha_dash = client.get(
+        alpha_dash = await client.get(
             "/api/dashboard", headers=auth_header(owners[alpha]["token"])
         )
-        beta_dash = client.get("/api/dashboard", headers=auth_header(owners[beta]["token"]))
+        beta_dash = await client.get(
+            "/api/dashboard", headers=auth_header(owners[beta]["token"])
+        )
         assert alpha_dash.status_code == 200
         assert beta_dash.status_code == 200
         alpha_blob = alpha_dash.text
@@ -85,7 +81,7 @@ class TestDashboardCallsLeadsSettings:
         assert "Beta Lead" not in alpha_blob
         assert "Alpha Lead" not in beta_blob
 
-        alpha_leads = client.get(
+        alpha_leads = await client.get(
             "/api/leads/board", headers=auth_header(owners[alpha]["token"])
         )
         assert alpha_leads.status_code == 200
@@ -97,14 +93,16 @@ class TestDashboardCallsLeadsSettings:
         assert "Alpha Lead" in names
         assert "Beta Lead" not in names
 
-        settings = client.get(
+        settings = await client.get(
             "/api/settings/account", headers=auth_header(owners[alpha]["token"])
         )
         assert settings.status_code == 200
         assert settings.json()["business_name"] == "Ruiz Plumbing"
         assert settings.json()["did_e164"] == "+12165550148"
 
-        team = client.get("/api/settings/team", headers=auth_header(owners[alpha]["token"]))
+        team = await client.get(
+            "/api/settings/team", headers=auth_header(owners[alpha]["token"])
+        )
         assert team.status_code == 200
         emails = {member["email"] for member in team.json()}
         assert "ray@ruiz.example" in emails
@@ -149,12 +147,12 @@ class TestDashboardCallsLeadsSettings:
             engine=app_engine,
         )
 
-        listed = client.get("/api/calls", headers=auth_header(owners[alpha]["token"]))
+        listed = await client.get("/api/calls", headers=auth_header(owners[alpha]["token"]))
         assert listed.status_code == 200
         blob = listed.text
         assert "Delgado secret" not in blob
 
-        search = client.get(
+        search = await client.get(
             "/api/calls",
             params={"q": "water heater"},
             headers=auth_header(owners[alpha]["token"]),
@@ -163,7 +161,7 @@ class TestDashboardCallsLeadsSettings:
         assert search.json()["total"] >= 1
 
         # Beta's owner searching the same phrase must not see Alpha's call.
-        beta_search = client.get(
+        beta_search = await client.get(
             "/api/calls",
             params={"q": "water heater"},
             headers=auth_header(owners[beta]["token"]),
@@ -187,7 +185,7 @@ class TestDashboardCallsLeadsSettings:
                 )
             ).scalar_one()
 
-        response = client.put(
+        response = await client.put(
             f"/api/leads/{lead_id}/value",
             headers=auth_header(token),
             json={"amount": "3800"},
@@ -199,7 +197,7 @@ class TestDashboardCallsLeadsSettings:
 
         # A float-looking body is still parsed as dollars, not as a Python float
         # stored in the column. The parser is deterministic.
-        again = client.put(
+        again = await client.put(
             f"/api/leads/{lead_id}/value",
             headers=auth_header(token),
             json={"amount": "38.50"},
@@ -210,7 +208,9 @@ class TestDashboardCallsLeadsSettings:
     async def test_test_call_refuses_outbound(self, client, portal_owners):
         alpha = portal_owners["alpha"]
         token = portal_owners["owners"][alpha]["token"]
-        response = client.post("/api/config/test-call", headers=auth_header(token))
+        response = await client.post(
+            "/api/config/test-call", headers=auth_header(token)
+        )
         assert response.status_code == 200
         body = response.json()
         assert body["placed"] is False

@@ -6,8 +6,6 @@ import ast
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
-from mabel_api.main import create_app
 from mabel_billing.plans import PLANS
 from mabel_billing.stripe_client import StripeUnavailable, api_key, is_configured
 from mabel_domain.money import Money, MoneyError, parse_owner_amount
@@ -72,18 +70,17 @@ def test_money_modules_do_not_use_float_literals_for_cents():
 
 
 @pytest.mark.asyncio
-async def test_billing_screen_is_honest_without_stripe(portal_owners, monkeypatch):
+async def test_billing_screen_is_honest_without_stripe(client, portal_owners, monkeypatch):
     monkeypatch.delenv("STRIPE_SECRET_KEY", raising=False)
     alpha = portal_owners["alpha"]
     token = portal_owners["owners"][alpha]["token"]
-    client = TestClient(create_app())
-    response = client.get("/api/billing", headers=auth_header(token))
+    response = await client.get("/api/billing", headers=auth_header(token))
     assert response.status_code == 200
     body = response.json()
     assert body["configured"] is False
     assert isinstance(body["estimated_overage_cents"], int)
     assert body["plan_cents"] is None or isinstance(body["plan_cents"], int)
-    checkout = client.post(
+    checkout = await client.post(
         "/api/billing/checkout",
         headers=auth_header(token),
         json={"plan": "mabel"},

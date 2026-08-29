@@ -5,8 +5,6 @@ from __future__ import annotations
 from uuid import UUID
 
 import pytest
-from fastapi.testclient import TestClient
-from mabel_api.main import create_app
 from mabel_media.inbound import accept_inbound_call, bind_inbound_opener
 from mabel_xai.client import VOICE_MODEL
 
@@ -186,12 +184,13 @@ class TestWebhookRules:
 
 
 class TestHttpFrontDoor:
-    async def test_http_unknown_did_is_404(self, inbound_env, two_tenants, monkeypatch):
+    async def test_http_unknown_did_is_404(
+        self, client, inbound_env, two_tenants, monkeypatch
+    ):
         del two_tenants
         monkeypatch.setenv("XAI_WEBHOOK_SECRET", XAI_WEBHOOK_SECRET)
-        client = TestClient(create_app())
         body = inbound_payload(to_did=UNKNOWN_DID, call_id="call_http_unknown")
-        response = client.post(
+        response = await client.post(
             "/webhooks/xai/inbound",
             content=body,
             headers=sign_xai(body, webhook_id="msg_http_unknown"),

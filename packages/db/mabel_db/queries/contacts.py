@@ -127,9 +127,11 @@ async def resolve_or_create(
             """
             INSERT INTO contacts (tenant_id, display_name, primary_phone, phones,
                                   first_seen_at, last_seen_at)
-            VALUES (:tenant_id, :name, :phone,
-                    CASE WHEN :phone IS NULL THEN '{}'::text[] ELSE ARRAY[:phone] END,
-                    coalesce(:now, now()), coalesce(:now, now()))
+            VALUES (:tenant_id, :name, CAST(:phone AS text),
+                    CASE WHEN CAST(:phone AS text) IS NULL THEN '{}'::text[]
+                         ELSE ARRAY[CAST(:phone AS text)] END,
+                    coalesce(CAST(:now AS timestamptz), now()),
+                    coalesce(CAST(:now AS timestamptz), now()))
             RETURNING id, display_name, primary_phone, phones, first_seen_at, last_seen_at
             """
         ),

@@ -240,6 +240,16 @@ class TestRolePrivileges:
             )
             assert result.scalar_one() is True
 
+    async def test_the_app_role_can_see_the_schema(self, engine: AsyncEngine):
+        """DROP SCHEMA public CASCADE + CREATE SCHEMA public leaves no USAGE
+        grant. Without this, every app-role query says the table does not
+        exist and RLS is never actually exercised."""
+        async with engine.connect() as conn:
+            result = await conn.execute(
+                text("SELECT has_schema_privilege('mabel_app', 'public', 'USAGE')")
+            )
+            assert result.scalar_one() is True
+
     @pytest.mark.parametrize("table", TENANT_SCOPED_TABLES)
     async def test_rls_is_enabled_and_forced(self, engine: AsyncEngine, table: str):
         # ENABLE alone is not enough: the table owner bypasses it, and in a
