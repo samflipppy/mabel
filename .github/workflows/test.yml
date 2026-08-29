@@ -1,9 +1,26 @@
 name: test
 
+# Manual only. Sam asked for this on 2026-08-29: a run on every push and
+# every PR was costing money while the v2 phases are still landing, and
+# nobody was waiting on the result of any individual run.
+#
+# This workflow is also the v1 one. It installs packages/verticals and
+# apps/api the way they used to be laid out, and both have been restructured
+# since -- so it now fails for reasons that have nothing to do with the code
+# being wrong. That is what the failing runs on main were.
+#
+# RE-ENABLE BEFORE RELYING ON CI. In particular tests/isolation -- 137 tests
+# covering cross-tenant RLS -- has never executed anywhere: there is no Docker
+# daemon or local Postgres on the machine the v2 branches were written on, so
+# CI is the only place it can run. One workflow_dispatch run settles it.
+#
+# To restore:
+#   on:
+#     pull_request:
+#     push:
+#       branches: [main]
 on:
-  pull_request:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
