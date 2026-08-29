@@ -14,6 +14,7 @@ dependencies = [
   "mabel-telnyx",
   "mabel-worker",
   "mabel-api",
+  "mabel-billing",
 ]
 
 [dependency-groups]
@@ -38,6 +39,7 @@ mabel-sms = { workspace = true }
 mabel-telnyx = { workspace = true }
 mabel-worker = { workspace = true }
 mabel-api = { workspace = true }
+mabel-billing = { workspace = true }
 
 [tool.ruff]
 line-length = 100
