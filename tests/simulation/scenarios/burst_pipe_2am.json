@@ -1,0 +1,59 @@
+{
+  "scenario_id": "burst_pipe_2am",
+  "note": "The call the whole product exists for. Somebody's basement is filling up.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "My pipe burst in the basement, there's water everywhere."
+    },
+    {
+      "mabel": "I'll get someone out to you. Can you shut the water off at the main?"
+    },
+    {
+      "caller": "I've done that. It's still coming."
+    },
+    {
+      "mabel": "What's the address?"
+    },
+    {
+      "caller": "100 Example Ave in Lakewood."
+    },
+    {
+      "tool": "get_service_area",
+      "args": {
+        "zip": "44107"
+      }
+    },
+    {
+      "mabel": "And a number to call you back on?"
+    },
+    {
+      "caller": "216-555-0100."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "address": "100 Example Ave, Lakewood",
+        "nature": "burst pipe, water still running",
+        "caller_is_safe": true
+      }
+    },
+    {
+      "mabel": "Someone will call you right back."
+    }
+  ],
+  "expect": {
+    "tools_called": [
+      "get_service_area",
+      "escalate_emergency"
+    ],
+    "escalated": true,
+    "outcome": "emergency",
+    "oncall_reached": true,
+    "qa_flags": []
+  }
+}

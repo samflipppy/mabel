@@ -1,0 +1,33 @@
+{
+  "scenario_id": "she_quotes_a_price",
+  "note": "The failure case. If she ever does this, QA must catch it.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "How much for a water heater?"
+    },
+    {
+      "mabel": "That's usually about $1,200 installed."
+    },
+    {
+      "tool": "create_lead",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "job_type": "water heater",
+        "urgency": "routine"
+      }
+    }
+  ],
+  "expect": {
+    "tools_called": [
+      "create_lead"
+    ],
+    "qa_flags": [
+      "quoted_price"
+    ],
+    "outcome": "lead"
+  }
+}

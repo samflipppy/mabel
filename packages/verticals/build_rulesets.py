@@ -116,6 +116,11 @@ PLUMBING = {
             "Water near the electrical panel, wake me and tell them to get out",
             [
                 "near the panel",
+                # The simulation caught this: a caller saying "near the
+                # electrical panel" matched nothing, because "near the panel"
+                # is not a substring of it.
+                "near the electrical panel",
+                "near the breaker panel",
                 "water and sparks",
                 "water near electrical",
                 "water in the breaker",
@@ -149,6 +154,7 @@ PLUMBING = {
         "plumbing_slow_drain_2am.json",
         "plumbing_sewage_backup.json",
         "plumbing_water_near_panel.json",
+        "plumbing_water_near_electrical_panel.json",
         "plumbing_no_hot_water.json",
         "plumbing_active_flooding_model_missed.json",
         "plumbing_override_water_heater_wakes_me.json",
@@ -443,9 +449,15 @@ LOCKSMITH = {
             "Child or animal locked in a car or a house, wake me and tell them to call 911",
             [
                 "baby is locked in",
+                # People speak in contractions. The simulation caught a call
+                # saying "my baby's locked in the car" matching nothing at all.
+                "baby's locked in",
                 "child is locked in",
+                "child's locked in",
                 "kid locked in the car",
+                "kid's locked in",
                 "dog is locked in",
+                "dog's locked in",
                 "pet locked in the car",
             ],
             safety_script="advise_call_911_child_or_pet",
@@ -486,6 +498,7 @@ LOCKSMITH = {
     "never_say": NEVER_SAY,
     "fixtures": [
         "locksmith_child_in_car.json",
+        "locksmith_child_contraction.json",
         "locksmith_locked_out.json",
         "locksmith_broken_key.json",
         "locksmith_rekey_routine.json",

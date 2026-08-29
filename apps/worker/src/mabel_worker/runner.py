@@ -56,6 +56,7 @@ def build_registry() -> dict[str, Handler]:
         monthly_report,
         morning_recap,
         purge_recording,
+        push_lead,
         qa_review,
         send_notification,
         silence_alert,
@@ -69,6 +70,7 @@ def build_registry() -> dict[str, Handler]:
         "silence_alert": silence_alert.run,
         "monthly_report": monthly_report.run,
         "purge_recording": purge_recording.run,
+        "push_lead": push_lead.run,
         "qa_review": qa_review.run,
         "send_notification": send_notification.run,
     }

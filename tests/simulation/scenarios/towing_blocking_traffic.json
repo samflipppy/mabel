@@ -1,0 +1,28 @@
+{
+  "scenario_id": "towing_blocking_traffic",
+  "note": "In a live lane is a different call from broken down on a driveway.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "towing",
+  "script": [
+    {
+      "caller": "I've broken down on the highway, I'm blocking traffic."
+    },
+    {
+      "mabel": "Get behind a barrier if you can and call 911."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "nature": "broken down blocking traffic on the highway",
+        "caller_is_safe": false
+      }
+    }
+  ],
+  "expect": {
+    "escalated": true,
+    "outcome": "emergency"
+  }
+}

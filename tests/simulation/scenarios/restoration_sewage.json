@@ -1,0 +1,27 @@
+{
+  "scenario_id": "restoration_sewage",
+  "note": "Contaminated water. She tells them not to go back down there until somebody has been out.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "restoration",
+  "script": [
+    {
+      "caller": "We've got raw sewage through the finished basement."
+    },
+    {
+      "mabel": "Don't go back down there until someone's been out."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "nature": "raw sewage in the basement"
+      }
+    }
+  ],
+  "expect": {
+    "escalated": true,
+    "outcome": "emergency"
+  }
+}

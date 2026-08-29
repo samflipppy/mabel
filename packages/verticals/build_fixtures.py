@@ -558,6 +558,37 @@ FIXTURES += [
 ]
 
 
+# Phrasings the simulation harness found were missed. Every ruleset change
+# ships with a fixture; these are those fixtures.
+FIXTURES += [
+    fixture(
+        "plumbing_water_near_electrical_panel",
+        "plumbing",
+        3,
+        ["Water is running down the wall near the electrical panel."],
+        "WATER_NEAR_ELECTRICAL",
+        "wake_now",
+        note=(
+            "The natural phrasing. 'near the panel' is not a substring of "
+            "'near the electrical panel', so this matched nothing until the "
+            "simulation ran it."
+        ),
+    ),
+    fixture(
+        "locksmith_child_contraction",
+        "locksmith",
+        1,
+        ["My baby's locked in the car and it's hot."],
+        "CHILD_OR_PET_LOCKED_IN",
+        "wake_now",
+        note=(
+            "People speak in contractions. The phrase list had 'baby is locked "
+            "in' and nothing else, so a real caller matched nothing."
+        ),
+    ),
+]
+
+
 # Fixtures that exercise the tenant override layer rather than a trigger.
 OVERRIDE_FIXTURES: list[dict[str, Any]] = [
     fixture(

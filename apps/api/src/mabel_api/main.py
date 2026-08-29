@@ -72,22 +72,38 @@ def create_app() -> FastAPI:
 
     # Webhooks first. They authenticate by signature, and mounting them above
     # the portal API keeps a mistake in the session dependency away from them.
-    from mabel_api.webhooks import telnyx
+    from mabel_api.webhooks import stripe, telnyx
 
     app.include_router(telnyx.router)
+    app.include_router(stripe.router)
 
     from mabel_mcp.server import router as mcp_router
 
     app.include_router(mcp_router)
 
-    from mabel_api.routes import calls, config, dashboard, leads, settings, test_call
+    from mabel_api.routes import (
+        billing,
+        calls,
+        config,
+        contacts,
+        dashboard,
+        leads,
+        onboarding,
+        reports,
+        settings,
+        test_call,
+    )
 
     app.include_router(dashboard.router)
+    app.include_router(billing.router)
     app.include_router(calls.router)
     app.include_router(leads.router)
+    app.include_router(contacts.router)
     app.include_router(config.router)
     app.include_router(test_call.router)
+    app.include_router(reports.router)
     app.include_router(settings.router)
+    app.include_router(onboarding.router)
 
     @app.get("/health")
     async def health() -> JSONResponse:

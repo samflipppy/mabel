@@ -1,0 +1,28 @@
+{
+  "scenario_id": "asks_something_she_does_not_know",
+  "note": "The tool whose job is to say 'I don't know'. She must not invent an answer.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 40,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "Do you do septic tanks?"
+    },
+    {
+      "tool": "answer_question",
+      "args": {
+        "question": "do you do septic tanks"
+      }
+    },
+    {
+      "mabel": "I'll have someone follow up on that."
+    }
+  ],
+  "expect": {
+    "tools_called": [
+      "answer_question"
+    ],
+    "outcome": "hangup"
+  },
+  "knowledge": []
+}

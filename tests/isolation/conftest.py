@@ -88,6 +88,7 @@ def _load_sql() -> str:
         _module(MIGRATIONS / "0003_did_resolution.py").FUNCTION,
         _module(MIGRATIONS / "0004_sms_sender_resolution.py").FUNCTION,
         _module(MIGRATIONS / "0005_portal_session_resolution.py").FUNCTION,
+        _module(MIGRATIONS / "0006_stripe_customer_resolution.py").FUNCTION,
     ]
     return "\n".join(parts)
 

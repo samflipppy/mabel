@@ -13,6 +13,8 @@ dependencies = [
   "mabel-sms",
   "mabel-telnyx",
   "mabel-verticals",
+  "mabel-billing",
+  "mabel-integrations",
 ]
 
 [tool.setuptools.packages.find]

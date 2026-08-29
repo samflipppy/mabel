@@ -15,7 +15,9 @@ from __future__ import annotations
 import json
 import logging
 from datetime import date, timedelta
+from typing import Any
 
+from mabel_billing.report_pdf import ReportFigures, render_pdf, storage_path
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine
 
@@ -32,7 +34,13 @@ def previous_month(today: date) -> tuple[date, date]:
     return last_of_previous.replace(day=1), last_of_previous
 
 
-async def run(job: Job, engine: AsyncEngine, *, today: date | None = None) -> None:
+async def run(
+    job: Job,
+    engine: AsyncEngine,
+    *,
+    today: date | None = None,
+    storage: Any | None = None,
+) -> None:
     if job.tenant_id is None:
         raise ValueError("monthly_report needs a tenant")
 
@@ -131,3 +139,82 @@ async def run(job: Job, engine: AsyncEngine, *, today: date | None = None) -> No
                 "waiting": json.dumps(waiting),
             },
         )
+
+        await _render_pdf(conn, job, start, end, row, breakdown, waiting, storage=storage)
+
+
+async def _render_pdf(
+    conn: Any,
+    job: Job,
+    start: date,
+    end: date,
+    row: Any,
+    breakdown: dict[str, int],
+    waiting: list[dict[str, Any]],
+    *,
+    storage: Any | None,
+) -> None:
+    """Render the PDF and record where it went.
+
+    The report row is written first and this runs after, so a storage outage
+    costs the attachment rather than the whole report. The portal renders the
+    same narrative from the same figures either way, which is the version the
+    contractor actually reads.
+    """
+    tenant = await conn.execute(text("SELECT business_name FROM tenants WHERE deleted_at IS NULL"))
+    business = tenant.scalar_one_or_none()
+    if business is None:
+        return
+
+    subscription = await conn.execute(
+        text("SELECT price_cents FROM subscriptions ORDER BY created_at DESC LIMIT 1")
+    )
+    # No subscription yet means a trial. Showing "you paid $0" would be worse
+    # than leaving the closing sentence out, which is what a zero price does.
+    plan_price = int(subscription.scalar_one_or_none() or 0)
+
+    oldest_days = None
+    if waiting:
+        oldest = min(entry["since"] for entry in waiting if entry.get("since"))
+        oldest_days = (date.today() - date.fromisoformat(oldest)).days
+
+    pdf = render_pdf(
+        ReportFigures(
+            business_name=business,
+            period_start=start,
+            period_end=end,
+            calls_answered=int(row["calls_answered"]),
+            leads_created=int(row["leads_created"]),
+            emergencies=int(row["emergencies"]),
+            jobs_won=int(row["jobs_won"]),
+            won_value_cents=int(row["won_value_cents"]),
+            source_breakdown=breakdown,
+            untouched_count=len(waiting),
+            oldest_untouched_days=oldest_days,
+            plan_price_cents=plan_price,
+        )
+    )
+
+    if storage is None:
+        logger.info(
+            "monthly report for %s rendered (%s bytes) but no storage is "
+            "configured, so it was not saved. See docs/BLOCKED.md #2.",
+            job.tenant_id,
+            len(pdf),
+        )
+        return
+
+    path = storage_path(str(job.tenant_id), start)
+    try:
+        await storage.put(path, pdf)
+    except Exception:  # noqa: BLE001 - a lost PDF must not lose the report
+        logger.exception("could not store the monthly report PDF for %s", job.tenant_id)
+        return
+
+    await conn.execute(
+        text(
+            "UPDATE monthly_reports SET pdf_path = :path "
+            "WHERE tenant_id = :t AND period_start = :start"
+        ),
+        {"path": path, "t": job.tenant_id, "start": start},
+    )

@@ -1,0 +1,22 @@
+{
+  "scenario_id": "hangs_up_after_four_seconds",
+  "note": "Not spam. A dropped call, and mislabelling it hides it from the owner.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 4,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "Oh—"
+    }
+  ],
+  "expect": {
+    "tools_not_called": [
+      "create_lead",
+      "escalate_emergency"
+    ],
+    "outcome": "hangup",
+    "qa_flags": [
+      "lost_caller_early"
+    ]
+  }
+}

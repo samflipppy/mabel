@@ -11,6 +11,7 @@
  */
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -62,6 +63,7 @@ export default function SettingsPage() {
       <h1 className="font-serif text-3xl">Settings</h1>
       <Forwarding />
       <AccountSection />
+      <BillingLink />
       <DataSection />
     </div>
   );
@@ -171,6 +173,26 @@ function Code({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function BillingLink() {
+  // 02-PORTAL.md puts billing under Settings rather than in the navigation.
+  // Seven nav items, not eight.
+  return (
+    <section>
+      <h2 className="font-serif text-2xl">Billing</h2>
+      <p className="mt-2 text-base text-[var(--taupe)]">
+        Your plan, what the next invoice will be, and your receipts.
+      </p>
+      <Link
+        href="/billing"
+        className="mt-3 inline-block min-h-[48px] rounded-lg border border-[var(--charcoal)] px-5 py-3 text-base"
+      >
+        Open billing
+      </Link>
+    </section>
+  );
+}
+
 
 function AccountSection() {
   const { data } = useQuery({

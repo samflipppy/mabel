@@ -1,0 +1,26 @@
+{
+  "scenario_id": "roofing_stain_no_active_leak",
+  "note": "A stain is a job. It is not a reason to wake anybody.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "roofing",
+  "script": [
+    {
+      "caller": "There's a brown mark on the ceiling but nothing's dripping."
+    },
+    {
+      "tool": "create_lead",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "job_type": "ceiling stain",
+        "urgency": "soon"
+      }
+    }
+  ],
+  "expect": {
+    "escalated": false,
+    "outcome": "lead",
+    "qa_flags": []
+  }
+}

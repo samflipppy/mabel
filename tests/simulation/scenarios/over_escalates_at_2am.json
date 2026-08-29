@@ -1,0 +1,27 @@
+{
+  "scenario_id": "over_escalates_at_2am",
+  "note": "Woke him for a slow drain. Costs a phone call at 2pm; costs the account at 2am.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "My drain's a bit slow."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "nature": "slow drain"
+      }
+    }
+  ],
+  "expect": {
+    "escalated": true,
+    "qa_flags": [
+      "over_escalated"
+    ],
+    "outcome": "emergency"
+  }
+}

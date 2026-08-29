@@ -1,0 +1,24 @@
+{
+  "scenario_id": "wrong_number_at_3am",
+  "note": "Politely, briefly, and no lead written.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 25,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "Is this the pizza place?"
+    },
+    {
+      "mabel": "No, this is Ruiz Plumbing. I think you've got the wrong number."
+    },
+    {
+      "caller": "Sorry."
+    }
+  ],
+  "expect": {
+    "tools_not_called": [
+      "create_lead"
+    ],
+    "outcome": "hangup"
+  }
+}

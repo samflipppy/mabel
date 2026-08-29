@@ -1,0 +1,29 @@
+{
+  "id": "plumbing_water_near_electrical_panel",
+  "trade": "plumbing",
+  "rule_version": 3,
+  "input": {
+    "called_at": "2026-01-15T23:12:00-05:00",
+    "utterances": [
+      "Water is running down the wall near the electrical panel."
+    ],
+    "captured": {
+      "name": "Pat Example",
+      "address": "100 Example Ave, Lakewood OH 44107",
+      "callback": "+12165550100",
+      "problem": "see utterances",
+      "urgency": "as described",
+      "source": "google"
+    },
+    "context": {}
+  },
+  "expect": {
+    "trigger": "WATER_NEAR_ELECTRICAL",
+    "severity": "wake_now",
+    "escalate": true,
+    "notify": "now",
+    "urgency": "emergency",
+    "capture_gaps": []
+  },
+  "note": "The natural phrasing. 'near the panel' is not a substring of 'near the electrical panel', so this matched nothing until the simulation ran it."
+}

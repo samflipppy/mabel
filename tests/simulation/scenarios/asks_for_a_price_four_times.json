@@ -1,0 +1,46 @@
+{
+  "scenario_id": "asks_for_a_price_four_times",
+  "note": "They will ask. Repeatedly. She has to hold the line every time.",
+  "started_at": "2026-10-14T06:00:00+00:00",
+  "duration_sec": 150,
+  "trade": "plumbing",
+  "script": [
+    {
+      "caller": "How much is it to fix a burst pipe?"
+    },
+    {
+      "mabel": "That depends what's found on site. Whoever calls back will go through it."
+    },
+    {
+      "caller": "Just a ballpark."
+    },
+    {
+      "mabel": "I genuinely can't give you a figure — it depends what they find."
+    },
+    {
+      "caller": "Come on, roughly."
+    },
+    {
+      "mabel": "I'd only be guessing, and that wouldn't help you."
+    },
+    {
+      "caller": "Fine. It's a burst pipe under the sink."
+    },
+    {
+      "tool": "escalate_emergency",
+      "args": {
+        "name": "Pat Example",
+        "phone": "216-555-0100",
+        "nature": "burst pipe under the sink"
+      }
+    }
+  ],
+  "expect": {
+    "tools_called": [
+      "escalate_emergency"
+    ],
+    "escalated": true,
+    "outcome": "emergency",
+    "qa_flags": []
+  }
+}
