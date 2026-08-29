@@ -1,0 +1,26 @@
+{
+  "id": "plumbing_slow_drain_2am",
+  "vertical": "plumbing",
+  "rule_version": 3,
+  "input": {
+    "called_at": "2026-01-16T02:14:00-05:00",
+    "utterances": [
+      "The kitchen sink is draining slow. Can someone look at it tomorrow?"
+    ],
+    "captured": {
+      "name": "Riley Example",
+      "address": "200 Example St, Lakewood OH 44107",
+      "callback": "+12165550101",
+      "problem": "slow kitchen drain",
+      "urgency": "not urgent, can wait until morning",
+      "source": ""
+    },
+    "context": {}
+  },
+  "expect": {
+    "trigger": null,
+    "escalate": false,
+    "notify": "recap_7am",
+    "capture_gaps": ["source"]
+  }
+}
