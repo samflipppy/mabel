@@ -38,6 +38,7 @@ Names only. Never put Telnyx, xAI, Jobber, or Stripe keys in a file, an env exam
 - `MABEL_ADMIN_TOKEN` — required on `POST /shops`. Missing config is 503. Wrong token is 401. `onboard_shop()` does not read this.
 - `XAI_WEBHOOK_SECRET` — verifies `webhook-id` / `webhook-timestamp` / `webhook-signature`
 - `XAI_API_KEY` — if missing, the webhook fails closed and Mabel does not join the call
-- `TELNYX_API_KEY` — if missing, the webhook fails closed and Mabel does not text the owner
+- `TELNYX_API_KEY` — if missing, the webhook fails closed and Mabel does not text the owner. On a matched emergency the lead is still saved; the SMS is recorded unsent with reason `telnyx not configured`. The key is never written to a file.
+- `TELNYX_FROM_E164` — Mabel's From number for owner texts. Never the caller's callback. 10DLC: nothing goes to a real number until the campaign clears.
 
 Voice model is pinned in code to `grok-voice-think-fast-2.0`. Not an env var. Never `grok-voice-latest`.

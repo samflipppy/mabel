@@ -60,6 +60,11 @@ def telnyx_ready() -> bool:
     return bool(_optional("TELNYX_API_KEY"))
 
 
+def telnyx_from_e164() -> str | None:
+    """Mabel's From number. Never the caller's callback. Not a secret."""
+    return _optional("TELNYX_FROM_E164")
+
+
 def _optional(name: str) -> str | None:
     value = os.environ.get(name)
     if value is None:
