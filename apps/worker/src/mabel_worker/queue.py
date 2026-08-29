@@ -226,7 +226,10 @@ async def depth(engine: AsyncEngine) -> dict[str, int]:
                 """
                 SELECT
                   count(*) FILTER (
-                    WHERE completed_at IS NULL AND failed_at IS NULL AND run_after <= now()
+                    WHERE completed_at IS NULL AND failed_at IS NULL
+                      AND run_after <= now()
+                      AND (locked_at IS NULL
+                           OR locked_at < now() - make_interval(secs => :lease))
                   ) AS ready,
                   count(*) FILTER (
                     WHERE completed_at IS NULL AND failed_at IS NULL AND locked_at IS NOT NULL
@@ -234,7 +237,8 @@ async def depth(engine: AsyncEngine) -> dict[str, int]:
                   count(*) FILTER (WHERE failed_at IS NOT NULL) AS failed
                 FROM job_queue
                 """
-            )
+            ),
+            {"lease": LEASE_SECONDS},
         )
         row = result.mappings().one()
         return {k: int(v) for k, v in row.items()}

@@ -34,6 +34,14 @@ def test_the_uuidv7_function_body_is_not_split():
     assert "LANGUAGE sql VOLATILE" in blocks[0]
 
 
+def test_a_semicolon_followed_by_a_comment_still_ends_the_statement():
+    """`CREATE EXTENSION ... pg_trgm; -- fuzzy` must not swallow uuidv7()."""
+    statements = _split(_load_sql())
+    trgm = [s for s in statements if "pg_trgm" in s]
+    assert trgm, "pg_trgm extension missing from the loaded SQL"
+    assert all("uuidv7" not in s for s in trgm)
+
+
 def test_every_statement_is_non_empty_and_comment_free():
     statements = _split(_load_sql())
     assert len(statements) > 40, f"suspiciously few statements: {len(statements)}"

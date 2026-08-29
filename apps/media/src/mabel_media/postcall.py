@@ -95,6 +95,7 @@ class Archived:
     outcome: str
     qa_flags: list[str]
     recording_path: str | None
+    transcript_path: str | None
     transcript_chars: int
     archived_at: datetime
 
@@ -197,6 +198,7 @@ def compute(call: CallOutcome, *, overrides: dict[str, Any] | None = None) -> Ar
         outcome=decide_outcome(call, classification_escalates=backstop_escalates),
         qa_flags=flags,
         recording_path=None,
+        transcript_path=None,
         transcript_chars=len(full_text(call.turns)),
         archived_at=datetime.now(UTC),
     )
@@ -210,6 +212,16 @@ def recording_path_for(call: CallOutcome) -> str:
     """
     day = call.started_at.astimezone(UTC).date().isoformat()
     return f"{call.tenant_id}/{day}/{call.call_id}.ulaw"
+
+
+def transcript_path_for(call: CallOutcome) -> str:
+    """Where the observed transcript goes in the private bucket.
+
+    Same prefix as the recording so a tenant deletion or a retention sweep
+    is one prefix operation, not two.
+    """
+    day = call.started_at.astimezone(UTC).date().isoformat()
+    return f"{call.tenant_id}/{day}/{call.call_id}.txt"
 
 
 async def finalize(
@@ -229,17 +241,29 @@ async def finalize(
     computed = compute(call, overrides=overrides)
 
     recording_path: str | None = None
-    if call.recording_bytes and storage is not None:
-        target = recording_path_for(call)
+    transcript_path: str | None = None
+    if storage is not None:
+        text_bytes = full_text(call.turns).encode("utf-8")
+        t_target = transcript_path_for(call)
         try:
-            await storage.put(target, call.recording_bytes)
-            recording_path = target
-        except Exception:  # noqa: BLE001 - a lost recording must not lose the call
+            await storage.put(t_target, text_bytes)
+            transcript_path = t_target
+        except Exception:  # noqa: BLE001 - a lost object must not lose the call
             logger.exception(
-                "failed to archive the recording for call %s; writing the row anyway",
+                "failed to archive the transcript for call %s; writing the row anyway",
                 call.call_id,
             )
-    elif call.recording_bytes and storage is None:
+        if call.recording_bytes:
+            target = recording_path_for(call)
+            try:
+                await storage.put(target, call.recording_bytes)
+                recording_path = target
+            except Exception:  # noqa: BLE001 - a lost recording must not lose the call
+                logger.exception(
+                    "failed to archive the recording for call %s; writing the row anyway",
+                    call.call_id,
+                )
+    elif call.recording_bytes:
         logger.warning(
             "no storage configured, so the recording for call %s was not archived. "
             "See docs/BLOCKED.md #2.",
@@ -254,6 +278,7 @@ async def finalize(
         outcome=computed.outcome,
         qa_flags=computed.qa_flags,
         recording_path=recording_path,
+        transcript_path=transcript_path,
         transcript_chars=computed.transcript_chars,
         archived_at=computed.archived_at,
     )

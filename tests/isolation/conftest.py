@@ -125,8 +125,22 @@ async def engine() -> AsyncIterator[AsyncEngine]:
         # different policy would make this suite pass for the wrong reason.
         await conn.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
         await conn.execute(text("CREATE SCHEMA public"))
+        # A recreated `public` has no default USAGE grant. Without it,
+        # `mabel_app` cannot see any relation — Postgres reports
+        # "does not exist" — and the RLS suite proves nothing.
+        await conn.execute(text("GRANT USAGE ON SCHEMA public TO PUBLIC"))
         for statement in _split(_load_sql()):
             await conn.execute(text(statement))
+        # Roles survive DROP SCHEMA. Make the grant explicit for both.
+        await conn.execute(text("GRANT USAGE ON SCHEMA public TO mabel_app, mabel_admin"))
+        # SECURITY DEFINER lookups are owned by mabel_admin. In production
+        # that role owns the tables; here mabel_test created them, so the
+        # functions cannot SELECT until we say so.
+        await conn.execute(text("GRANT SELECT ON ALL TABLES IN SCHEMA public TO mabel_admin"))
+        # The live grant on job_queue is SELECT/INSERT/UPDATE. Isolation
+        # tests wipe the queue between cases; that DELETE is test cleanup,
+        # not a worker behaviour.
+        await conn.execute(text("GRANT DELETE ON job_queue TO mabel_app"))
 
     yield admin
     await admin.dispose()
@@ -147,7 +161,11 @@ def _split(sql: str) -> list[str]:
             del token
             in_dollar = not in_dollar
         buffer.append(line)
-        if not in_dollar and stripped.endswith(";"):
+        # A trailing `-- comment` after the semicolon is common in the
+        # schema (pg_trgm). Without stripping it, the splitter never
+        # flushes and two statements become one prepared command.
+        code = stripped.split("--", 1)[0].rstrip()
+        if not in_dollar and code.endswith(";"):
             statement = "\n".join(buffer).strip()
             if statement:
                 statements.append(statement)
