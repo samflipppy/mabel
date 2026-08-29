@@ -344,4 +344,3 @@ def test_patch_does_not_accept_vertical_or_live(monkeypatch) -> None:
         headers=_auth(),
     )
     assert live.status_code == 422
-

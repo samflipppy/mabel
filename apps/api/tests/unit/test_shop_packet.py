@@ -65,12 +65,8 @@ def test_dollar_looking_greeting_notes_are_rejected(notes: str) -> None:
 def test_two_tenants_service_area_isolation() -> None:
     tenant_a = uuid4()
     tenant_b = uuid4()
-    register_packet(
-        _packet(tenant_id=tenant_a, name="Shop A", service_area_zips=("44107",))
-    )
-    register_packet(
-        _packet(tenant_id=tenant_b, name="Shop B", service_area_zips=("44102",))
-    )
+    register_packet(_packet(tenant_id=tenant_a, name="Shop A", service_area_zips=("44107",)))
+    register_packet(_packet(tenant_id=tenant_b, name="Shop B", service_area_zips=("44102",)))
 
     bound_a = bind_tenant(tenant_a)
     try:

@@ -152,9 +152,7 @@ def update_shop_packet(conn: Any, packet: ShopPacket, *, replace_zips: bool) -> 
 
 def replace_service_area_zips(conn: Any, tenant_id: UUID, zips: tuple[str, ...]) -> None:
     """Retire active zips, then insert or un-retire the new list. No DELETE."""
-    conn.execute(
-        "UPDATE service_area_zips SET retired_at = now() WHERE retired_at IS NULL"
-    )
+    conn.execute("UPDATE service_area_zips SET retired_at = now() WHERE retired_at IS NULL")
     for zip_code in dict.fromkeys(zips):
         found = conn.execute(
             "SELECT zip FROM service_area_zips WHERE zip = %s",

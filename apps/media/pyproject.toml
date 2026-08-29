@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mabel-media"
+version = "2.0.0"
+description = "The xAI WebSocket relay. Its own Fly process so a portal deploy never drops a live call."
+requires-python = ">=3.12"
+dependencies = [
+  "mabel-domain",
+  "mabel-db",
+  "mabel-verticals",
+  "mabel-xai",
+  "mabel-mcp",
+  "websockets>=13",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mabel_media*"]
+
+[tool.setuptools.package-dir]
+"" = "src"

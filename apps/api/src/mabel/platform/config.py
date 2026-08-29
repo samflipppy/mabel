@@ -46,9 +46,7 @@ def require_admin_token() -> str:
 def require_webhook_secret() -> str:
     secret = _optional("XAI_WEBHOOK_SECRET")
     if not secret:
-        raise ConfigError(
-            "Mabel cannot verify this call. Webhook signing is not configured."
-        )
+        raise ConfigError("Mabel cannot verify this call. Webhook signing is not configured.")
     return secret
 
 

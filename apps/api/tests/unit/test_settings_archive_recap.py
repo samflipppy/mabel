@@ -67,9 +67,7 @@ class ScriptedConn:
             if self._tenant is None:
                 return _Rows([])
             active = [
-                (zip_code,)
-                for zip_code, retired in sorted(self.zips.items())
-                if retired is None
+                (zip_code,) for zip_code, retired in sorted(self.zips.items()) if retired is None
             ]
             return _Rows(active)
         if "from tenants" in lowered:

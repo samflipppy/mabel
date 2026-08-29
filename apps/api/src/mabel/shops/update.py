@@ -33,11 +33,7 @@ def update_shop(
     """Update packet fields. Does not change vertical rules or take a shop live."""
     current = _current_packet(tenant_id, conn)
     notes = greeting_notes if greeting_notes_set else current.greeting_notes
-    zips = (
-        tuple(service_area_zips)
-        if service_area_zips is not None
-        else current.service_area_zips
-    )
+    zips = tuple(service_area_zips) if service_area_zips is not None else current.service_area_zips
     packet = ShopPacket(
         tenant_id=current.tenant_id,
         name=name if name is not None else current.name,
