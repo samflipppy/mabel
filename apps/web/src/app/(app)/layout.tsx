@@ -44,15 +44,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       setState("unconfigured");
       return;
     }
+    // The cleanup has to do both things: stop the in-flight getSession from
+    // setting state after unmount, and unsubscribe. Returning only the
+    // unsubscribe left `cancelled` permanently false, so the guard did
+    // nothing — the linter caught it.
     let cancelled = false;
 
     getSession().then((session) => {
       if (!cancelled) setState(session ? "signed-in" : "signed-out");
     });
 
-    return onAuthChange((session) => {
+    const unsubscribe = onAuthChange((session) => {
       if (!cancelled) setState(session ? "signed-in" : "signed-out");
     });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
