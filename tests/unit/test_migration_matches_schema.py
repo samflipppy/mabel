@@ -79,9 +79,7 @@ def _policies(sql: str) -> set[tuple[str, str]]:
 
 def _columns(sql: str, table: str) -> dict[str, str]:
     """Column name -> declared type, for one CREATE TABLE block."""
-    match = re.search(
-        rf"create table (?:if not exists )?{table}\s*\((.*?)\n\);", sql, re.I | re.S
-    )
+    match = re.search(rf"create table (?:if not exists )?{table}\s*\((.*?)\n\);", sql, re.I | re.S)
     if match is None:
         return {}
     body = match.group(1)
@@ -345,5 +343,5 @@ class TestMigrationHygiene:
             )
 
     def test_the_revision_chain_is_linear(self):
-        assert 'down_revision: str | None = None' in CORE.read_text(encoding="utf-8")
+        assert "down_revision: str | None = None" in CORE.read_text(encoding="utf-8")
         assert 'down_revision: str | None = "0001_v2_schema"' in CRON.read_text(encoding="utf-8")

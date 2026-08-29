@@ -1,0 +1,131 @@
+{
+  "trade": "hvac",
+  "version": 2,
+  "effective_from": "2026-08-01",
+  "verified": true,
+  "triggers": [
+    {
+      "code": "GAS_SMELL",
+      "severity": "wake_now",
+      "label": "Smell of gas, wake me and tell them to get out",
+      "phrases": [
+        "smell gas",
+        "smell of gas",
+        "gas leak",
+        "smells like gas",
+        "rotten eggs"
+      ],
+      "safety_script": "advise_shut_off_gas_and_leave"
+    },
+    {
+      "code": "CO_ALARM",
+      "severity": "wake_now",
+      "label": "Carbon monoxide alarm going off, wake me and tell them to get out",
+      "phrases": [
+        "carbon monoxide",
+        "co alarm",
+        "co detector",
+        "monoxide alarm"
+      ],
+      "safety_script": "advise_leave_and_call_911"
+    },
+    {
+      "code": "NO_HEAT_FREEZING",
+      "severity": "wake_now",
+      "label": "No heat when it is freezing outside, wake me",
+      "phrases": [
+        "no heat",
+        "furnace is out",
+        "furnace stopped",
+        "heat is out",
+        "no heat at all"
+      ],
+      "require": {
+        "outdoor_temp_f_lte": 32
+      }
+    },
+    {
+      "code": "NO_HEAT_VULNERABLE",
+      "severity": "wake_now",
+      "label": "No heat with an infant, an elderly or an unwell person in the house, wake me",
+      "phrases": [
+        "no heat",
+        "furnace is out",
+        "heat is out"
+      ],
+      "require": {
+        "vulnerable_occupant": true
+      }
+    },
+    {
+      "code": "NO_COOLING_EXTREME",
+      "severity": "wake_now",
+      "label": "No cooling in extreme heat, wake me",
+      "phrases": [
+        "no ac",
+        "no air conditioning",
+        "ac is out",
+        "air conditioning is out"
+      ],
+      "require": {
+        "outdoor_temp_f_gte": 95
+      }
+    },
+    {
+      "code": "NO_HEAT",
+      "severity": "morning",
+      "label": "No heat in mild weather, the morning is fine",
+      "phrases": [
+        "no heat",
+        "furnace is out",
+        "heat is out",
+        "furnace not working"
+      ]
+    },
+    {
+      "code": "NO_COOLING",
+      "severity": "morning",
+      "label": "No cooling in ordinary weather, the morning is fine",
+      "phrases": [
+        "no ac",
+        "no air conditioning",
+        "ac is out",
+        "ac not working"
+      ]
+    },
+    {
+      "code": "THERMOSTAT_ISSUE",
+      "severity": "routine",
+      "label": "Thermostat trouble, whenever you get to it",
+      "phrases": [
+        "thermostat",
+        "blank screen on the thermostat"
+      ]
+    }
+  ],
+  "required_capture": [
+    "name",
+    "address",
+    "callback",
+    "problem",
+    "urgency",
+    "source"
+  ],
+  "never_say": [
+    "price",
+    "estimate_range",
+    "hourly_rate",
+    "arrival_time"
+  ],
+  "fixtures": [
+    "hvac_no_heat_freezing.json",
+    "hvac_no_heat_mild.json",
+    "hvac_no_heat_vulnerable.json",
+    "hvac_gas_smell.json",
+    "hvac_co_alarm.json",
+    "hvac_no_cooling_extreme.json",
+    "hvac_thermostat_routine.json",
+    "hvac_override_bad_severity_falls_back.json",
+    "hvac_no_cooling_ordinary.json"
+  ]
+}

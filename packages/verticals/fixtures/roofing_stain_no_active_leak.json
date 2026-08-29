@@ -1,11 +1,11 @@
 {
-  "id": "restoration_active_water",
-  "trade": "restoration",
+  "id": "roofing_stain_no_active_leak",
+  "trade": "roofing",
   "rule_version": 1,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "The water is still coming in from the upstairs bathroom."
+      "There's a brown spot on the ceiling but nothing is dripping."
     ],
     "captured": {
       "name": "Pat Example",
@@ -18,13 +18,12 @@
     "context": {}
   },
   "expect": {
-    "trigger": "ACTIVE_WATER_INTRUSION",
-    "severity": "wake_now",
-    "escalate": true,
-    "notify": "now",
-    "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
+    "trigger": "LEAK_STAIN_NO_ACTIVE",
+    "severity": "morning",
+    "escalate": false,
+    "notify": "recap_7am",
+    "urgency": "soon",
+    "capture_gaps": []
   },
-  "model_code": "ACTIVE_WATER_INTRUSION"
+  "note": "A stain is a job. It is not a reason to wake anybody, and saying so is the point."
 }

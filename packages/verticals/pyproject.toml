@@ -4,22 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mabel-verticals"
-version = "0.1.0"
-description = "Mabel vertical rule library and golden fixtures"
-readme = "README.md"
+version = "2.0.0"
+description = "Mabel trade rulesets and the emergency engine. Pure: no I/O, no DB, no network."
 requires-python = ">=3.12"
-authors = [{ name = "Mabel" }]
+dependencies = []
 
-[project.optional-dependencies]
-dev = ["pytest>=8"]
-
-[tool.setuptools.packages.find]
-include = ["mabel_verticals*"]
+[tool.setuptools]
+# The rulesets and fixtures sit beside the package rather than inside it, as
+# 04-REPO.md lays out. They are bundled as data so an installed wheel can still
+# load them.
+packages = ["mabel_verticals"]
 
 [tool.setuptools.package-data]
-mabel_verticals = []
-
-[tool.ruff]
-line-length = 100
-target-version = "py312"
-
+mabel_verticals = ["../rulesets/*.json", "../fixtures/*.json"]

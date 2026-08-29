@@ -1,11 +1,11 @@
 {
-  "id": "restoration_active_water",
-  "trade": "restoration",
+  "id": "towing_wont_start_morning",
+  "trade": "towing",
   "rule_version": 1,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "The water is still coming in from the upstairs bathroom."
+      "The car won't start in my driveway, dead battery I think."
     ],
     "captured": {
       "name": "Pat Example",
@@ -18,13 +18,11 @@
     "context": {}
   },
   "expect": {
-    "trigger": "ACTIVE_WATER_INTRUSION",
-    "severity": "wake_now",
-    "escalate": true,
-    "notify": "now",
-    "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
-  },
-  "model_code": "ACTIVE_WATER_INTRUSION"
+    "trigger": "VEHICLE_WONT_START",
+    "severity": "morning",
+    "escalate": false,
+    "notify": "recap_7am",
+    "urgency": "soon",
+    "capture_gaps": []
+  }
 }

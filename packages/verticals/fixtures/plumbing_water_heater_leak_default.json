@@ -1,11 +1,11 @@
 {
-  "id": "plumbing_burst_pipe",
+  "id": "plumbing_water_heater_leak_default",
   "trade": "plumbing",
   "rule_version": 3,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "Hi, my pipe burst in the basement and I need someone out."
+      "The water heater is leaking a bit onto the floor."
     ],
     "captured": {
       "name": "Pat Example",
@@ -18,14 +18,12 @@
     "context": {}
   },
   "expect": {
-    "trigger": "BURST_PIPE",
-    "severity": "wake_now",
-    "escalate": true,
-    "notify": "now",
-    "urgency": "emergency",
-    "capture_gaps": [],
-    "matched_by": "both"
+    "trigger": "WATER_HEATER_LEAK",
+    "severity": "morning",
+    "escalate": false,
+    "notify": "recap_7am",
+    "urgency": "soon",
+    "capture_gaps": []
   },
-  "model_code": "BURST_PIPE",
-  "note": "The ordinary emergency. Model and backstop agree."
+  "note": "The library default, so the override fixture has something to differ from."
 }

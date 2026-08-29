@@ -1,0 +1,34 @@
+{
+  "id": "plumbing_override_sewage_muted",
+  "trade": "plumbing",
+  "rule_version": 3,
+  "input": {
+    "called_at": "2026-01-15T23:12:00-05:00",
+    "utterances": [
+      "There's sewage backing up in the basement."
+    ],
+    "captured": {
+      "name": "Pat Example",
+      "address": "100 Example Ave, Lakewood OH 44107",
+      "callback": "+12165550100",
+      "problem": "see utterances",
+      "urgency": "as described",
+      "source": "google"
+    },
+    "context": {}
+  },
+  "expect": {
+    "trigger": null,
+    "severity": null,
+    "escalate": false,
+    "notify": "recap_7am",
+    "urgency": "routine",
+    "capture_gaps": []
+  },
+  "overrides": {
+    "SEWAGE_BACKUP": {
+      "enabled": false
+    }
+  },
+  "note": "And an owner who turns a trigger off gets it off. It becomes an ordinary lead in the 7am recap rather than a phone call. This is his business, not ours."
+}

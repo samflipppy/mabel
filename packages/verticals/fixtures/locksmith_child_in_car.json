@@ -1,11 +1,11 @@
 {
-  "id": "hvac_no_heat_freezing",
-  "trade": "hvac",
-  "rule_version": 2,
+  "id": "locksmith_child_in_car",
+  "trade": "locksmith",
+  "rule_version": 1,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "We have no heat and it's ten degrees out."
+      "My baby is locked in the car and it's running hot."
     ],
     "captured": {
       "name": "Pat Example",
@@ -15,12 +15,10 @@
       "urgency": "as described",
       "source": "google"
     },
-    "context": {
-      "outdoor_temp_f": 10
-    }
+    "context": {}
   },
   "expect": {
-    "trigger": "NO_HEAT_FREEZING",
+    "trigger": "CHILD_OR_PET_LOCKED_IN",
     "severity": "wake_now",
     "escalate": true,
     "notify": "now",
@@ -28,5 +26,6 @@
     "capture_gaps": [],
     "matched_by": "both"
   },
-  "model_code": "NO_HEAT_FREEZING"
+  "model_code": "CHILD_OR_PET_LOCKED_IN",
+  "note": "911 before locksmith. The safety script says so and she says it first."
 }

@@ -1,11 +1,11 @@
 {
-  "id": "electrical_burning_smell",
-  "trade": "electrical",
-  "rule_version": 2,
+  "id": "plumbing_active_flooding_model_missed",
+  "trade": "plumbing",
+  "rule_version": 3,
   "input": {
     "called_at": "2026-01-15T23:12:00-05:00",
     "utterances": [
-      "There's a burning smell coming from the outlet in the hallway."
+      "There's water everywhere, it's coming through the light fixture."
     ],
     "captured": {
       "name": "Pat Example",
@@ -18,13 +18,14 @@
     "context": {}
   },
   "expect": {
-    "trigger": "BURNING_SMELL",
+    "trigger": "ACTIVE_FLOODING",
     "severity": "wake_now",
     "escalate": true,
     "notify": "now",
     "urgency": "emergency",
     "capture_gaps": [],
-    "matched_by": "both"
+    "matched_by": "phrases_over_model"
   },
-  "model_code": "BURNING_SMELL"
+  "model_code": "SLOW_DRAIN",
+  "note": "The model called this a slow drain. The backstop caught it. The more severe answer wins and the call gets flagged, because the failure that matters is the one where nobody rings."
 }
