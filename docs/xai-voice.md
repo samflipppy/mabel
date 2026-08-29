@@ -93,6 +93,10 @@ We do **not** click templates like Customer Support per shop. Onboard creates th
 - Pin **`grok-voice-think-fast-2.0`**. No voice clone.
 - No `web_search`. No `x_search`. Eight tools only.
 
-Shop packet (hours, zips, owner SMS) still lives in **our** database (`infra/0002_shop_packet.sql`) and is injected after tenant resolution from the inbound DID. Store `xai_voice_agent_id` on the tenant when we have it (`infra/0003_xai_voice_agent.sql`, draft). Onboard records it as optional/null until we actually create the agent. Creating the console agent is still a stub; this repo does not call xAI to create one. Call join uses `FakeSessionTransport` in tests.
+Shop packet (hours, zips, owner SMS) still lives in **our** database (`infra/0002_shop_packet.sql`) and is injected after tenant resolution from the inbound DID. Store `xai_voice_agent_id` on the tenant when we have it (`infra/0003_xai_voice_agent.sql`, draft).
+
+Onboard creates the agent when `XAI_API_KEY` is set. Tests bind `FakeXaiAgentsClient` and never POST to xAI. The production client refuses under pytest and fails closed without a key. Public docs.x.ai (2026-08-29) do not list a Voice Agents create route; the client POSTs the most likely shape, `https://api.x.ai/v1/voice-agents`, with our template (Mabel, disclosure, never quote, never invent arrival, pin `grok-voice-think-fast-2.0`, no clone, eight MCP tools at `MABEL_MCP_PUBLIC_URL`, no `web_search` / `x_search`). If that call does not return an id, onboard leaves the column null and the shop still drafts. Console login can still mint the agent until that API is confirmed. Never invent a key.
+
+Call join uses `FakeSessionTransport` in tests.
 
 Collections may hold non-price shop docs (hours sheet, service-area notes with no figures). Reject dollar-looking uploads the same way greeting notes are rejected. A price PDF in a collection is how she starts quoting. Don't.

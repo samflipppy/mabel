@@ -1,19 +1,24 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from mabel_verticals.load import load_fixture, load_latest_rules
 
 from mabel.mcp.tools import bind_tenant, call_tool, reset_store, reset_tenant, store
-from mabel.shops.packet import ShopPacket, register_packet
+from mabel.shops.packet import ShopPacket, register_packet, reset_packets
 from mabel.sms import (
     REASON_DOLLAR,
     REASON_TELNYX,
     SmsError,
     TelnyxHttpSmsClient,
+    queue_morning_recap,
     recap_queue,
+    reset_recap,
+    reset_sms,
+    send_due_recaps,
     sms_attempts,
 )
 from mabel.sms.recap import next_7am_local, set_clock
@@ -25,6 +30,9 @@ CALLER = "+12165550100"
 
 def setup_function() -> None:
     reset_store()
+    reset_packets()
+    reset_recap()
+    reset_sms()
 
 
 def _packet(tenant_id, **overrides) -> ShopPacket:
@@ -234,3 +242,108 @@ def test_next_7am_after_seven_is_tomorrow() -> None:
     recap_at = next_7am_local(tz_name="America/New_York", now=now)
     assert recap_at.date().isoformat() == "2026-01-17"
     assert recap_at.hour == 7
+
+
+def _overnight_leads(tenant_id) -> None:
+    from mabel.leads.models import Lead
+    from mabel.mcp.tools import store
+
+    night = datetime.fromisoformat("2026-01-16T02:10:00-05:00")
+    store().leads.append(
+        Lead(
+            id=uuid4(),
+            tenant_id=tenant_id,
+            name="Pat Example",
+            address="100 Example Ave, Lakewood OH 44107",
+            callback=CALLER,
+            problem="slow drain",
+            urgency="morning",
+            source="google",
+            created_at=night,
+        )
+    )
+    store().leads.append(
+        Lead(
+            id=uuid4(),
+            tenant_id=tenant_id,
+            name="Other Example",
+            address="200 Example Ave, Lakewood OH 44107",
+            callback=CALLER,
+            problem="burst pipe",
+            urgency="now",
+            source="google",
+            emergency_code="BURST_PIPE",
+            created_at=night,
+        )
+    )
+
+
+def test_send_due_recaps_texts_owner_not_customer(monkeypatch, fake_telnyx_client) -> None:
+    monkeypatch.setenv("TELNYX_API_KEY", "test-not-a-real-key")
+    monkeypatch.setenv("TELNYX_FROM_E164", "+18005550199")
+    tenant_id = uuid4()
+    register_packet(_packet(tenant_id))
+    set_clock(datetime.fromisoformat("2026-01-16T02:00:00-05:00"))
+    queue_morning_recap(tenant_id)
+    _overnight_leads(tenant_id)
+
+    results = send_due_recaps(datetime.fromisoformat("2026-01-16T07:00:00-05:00"))
+    assert len(results) == 1
+    assert results[0].sent is True
+    assert results[0].to == OWNER
+    assert results[0].to != CALLER
+    assert results[0].lead_count == 2
+    assert results[0].emergency_count == 1
+    assert "2 leads" in results[0].body
+    assert "1 emergency" in results[0].body
+    assert "$" not in results[0].body
+    assert CALLER not in results[0].body
+    assert len(fake_telnyx_client.sent) == 1
+    assert fake_telnyx_client.sent[0]["to"] == OWNER
+    assert fake_telnyx_client.sent[0]["to"] != CALLER
+    assert recap_queue()[0].sent_at is not None
+    attempts = sms_attempts()
+    assert attempts[-1].sent is True
+    assert attempts[-1].purpose == "recap_7am"
+    assert attempts[-1].to == OWNER
+
+
+def test_send_due_recaps_without_telnyx_keeps_queue_item(
+    monkeypatch, fake_telnyx_client
+) -> None:
+    monkeypatch.delenv("TELNYX_API_KEY", raising=False)
+    tenant_id = uuid4()
+    register_packet(_packet(tenant_id))
+    set_clock(datetime.fromisoformat("2026-01-16T02:00:00-05:00"))
+    item = queue_morning_recap(tenant_id)
+    results = send_due_recaps(datetime.fromisoformat("2026-01-16T07:00:00-05:00"))
+    assert results[0].sent is False
+    assert results[0].reason == REASON_TELNYX
+    assert results[0].to == OWNER
+    assert fake_telnyx_client.sent == []
+    queued = recap_queue()
+    assert len(queued) == 1
+    assert queued[0].id == item.id
+    assert queued[0].sent_at is None
+
+
+def test_send_due_recaps_skips_future_items(monkeypatch, fake_telnyx_client) -> None:
+    monkeypatch.setenv("TELNYX_API_KEY", "test-not-a-real-key")
+    monkeypatch.setenv("TELNYX_FROM_E164", "+18005550199")
+    tenant_id = uuid4()
+    register_packet(_packet(tenant_id))
+    set_clock(datetime.fromisoformat("2026-01-16T02:00:00-05:00"))
+    queue_morning_recap(tenant_id)
+    results = send_due_recaps(datetime.fromisoformat("2026-01-16T06:00:00-05:00"))
+    assert results == []
+    assert fake_telnyx_client.sent == []
+    assert recap_queue()[0].sent_at is None
+
+
+def test_recap_send_entrypoint_exists() -> None:
+    from mabel.sms import recap_send
+
+    source = Path(recap_send.__file__).read_text(encoding="utf-8")
+    assert "python -m mabel.sms.recap_send" in source
+    assert "send_due_recaps" in source
+    assert "cron" in source.lower()

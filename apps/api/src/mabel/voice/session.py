@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any, Protocol
 from uuid import UUID
 
+from mabel.platform.config import mcp_public_url
 from mabel.shops.packet import PacketError, ShopPacket, packet_for, reject_dollar_text
 from mabel.voice.agents import MABEL_MCP_TOOLS, MABEL_VOICE_AGENT_TEMPLATE
 from mabel.voice.archive import CallArchive, archive_call
@@ -163,11 +164,7 @@ def _transport() -> SessionTransport:
 
 
 def _mcp_public_url() -> str:
-    value = os.environ.get("MABEL_MCP_PUBLIC_URL")
-    if value is None:
-        return DEFAULT_MCP_URL
-    stripped = value.strip()
-    return stripped or DEFAULT_MCP_URL
+    return mcp_public_url() or DEFAULT_MCP_URL
 
 
 def _xai_api_key() -> str | None:

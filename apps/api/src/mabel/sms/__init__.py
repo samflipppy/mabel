@@ -17,6 +17,7 @@ from mabel.sms.notify import (
     sms_attempts,
 )
 from mabel.sms.recap import RecapItem, queue_morning_recap, recap_queue, reset_recap, set_clock
+from mabel.sms.recap_send import RecapSendResult, render_recap_body, send_due_recaps
 
 __all__ = [
     "FakeTelnyxSmsClient",
@@ -24,6 +25,7 @@ __all__ = [
     "REASON_RECAP",
     "REASON_TELNYX",
     "RecapItem",
+    "RecapSendResult",
     "SmsAttempt",
     "SmsError",
     "TelnyxHttpSmsClient",
@@ -32,8 +34,10 @@ __all__ = [
     "queue_morning_recap",
     "recap_queue",
     "render_emergency_body",
+    "render_recap_body",
     "reset_recap",
     "reset_sms",
+    "send_due_recaps",
     "send_owner_emergency_sms",
     "set_clock",
     "sms_attempts",

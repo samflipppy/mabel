@@ -5,3 +5,5 @@ She answers the phone after hours. A homeowner calls a plumber at 9pm with a bur
 That's it. That's the product.
 
 Read [`AGENTS.md`](AGENTS.md) before you write a line. Violating an invariant there is a failed review.
+
+Sam plugs credentials in [`SETUP.md`](SETUP.md). Hire Mabel.

@@ -29,6 +29,7 @@ from mabel.shops.packet import (
     register_packet,
 )
 from mabel.shops.store import SHOP_STATUS_DRAFT, persist_onboarded_shop
+from mabel.voice.agents import maybe_create_voice_agent
 
 __all__ = [
     "DuplicateDidError",
@@ -61,10 +62,13 @@ def onboard_shop(
 ) -> OnboardedShop:
     """Create a shop as draft. Tenant id is minted here, never taken from a caller.
 
-    xai_voice_agent_id is optional. This path does not call xAI to create an agent.
+    When XAI_API_KEY is set, create the per-shop agent from our template and
+    store the returned id. Without the key, or if create fails, leave null.
+    The shop still drafts. A failed create does not raise.
     """
     tenant_id = uuid4()
     did = _inbound_did(inbound_did)
+    agent_id = maybe_create_voice_agent(shop_name=name, provided_id=xai_voice_agent_id)
     packet_kwargs: dict[str, Any] = {}
     if after_hours_start is not None:
         packet_kwargs["after_hours_start"] = after_hours_start
@@ -78,7 +82,7 @@ def onboard_shop(
         timezone=timezone or DEFAULT_TIMEZONE,
         service_area_zips=tuple(service_area_zips),
         greeting_notes=greeting_notes,
-        xai_voice_agent_id=xai_voice_agent_id,
+        xai_voice_agent_id=agent_id,
         **packet_kwargs,
     )
 

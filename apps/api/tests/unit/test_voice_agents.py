@@ -12,9 +12,13 @@ from mabel.voice.agents import (
     MABEL_AGENT_INSTRUCTIONS,
     MABEL_MCP_TOOLS,
     MABEL_VOICE_AGENT_TEMPLATE,
+    VOICE_AGENTS_URL,
+    FakeXaiAgentsClient,
     FakeXaiVoiceAgentClient,
-    StubXaiVoiceAgentClient,
     VoiceAgentError,
+    XaiHttpVoiceAgentClient,
+    build_create_agent_body,
+    parse_agent_id,
     reject_collection_upload,
 )
 from mabel.voice.model import OPENING_DISCLOSURE, VOICE_MODEL
@@ -47,39 +51,109 @@ def test_template_is_mabel_not_customer_support() -> None:
 
 
 def test_fake_client_creates_from_our_template_not_xai() -> None:
-    fake = FakeXaiVoiceAgentClient(next_id="agent_shop_a")
+    fake = FakeXaiAgentsClient(next_id="agent_shop_a")
+    assert FakeXaiAgentsClient is FakeXaiVoiceAgentClient
     agent_id = fake.create_from_template(shop_name="Example Plumbing")
     assert agent_id == "agent_shop_a"
-    assert fake.created == [
+    assert fake.created[0]["shop_name"] == "Example Plumbing"
+    assert fake.created[0]["agent_id"] == "agent_shop_a"
+    assert fake.created[0]["template_name"] == "Mabel"
+    assert fake.created[0]["model"] == "grok-voice-think-fast-2.0"
+    assert fake.created[0]["console_template"] is None
+    body = fake.created[0]["body"]
+    assert isinstance(body, dict)
+    assert body["model"] == "grok-voice-think-fast-2.0"
+    assert body["voice_clone"] is False
+    tool_types = [tool.get("type") for tool in body["tools"]]
+    assert "web_search" not in tool_types
+    assert "x_search" not in tool_types
+
+
+def test_create_body_is_our_template_with_mcp_url(monkeypatch) -> None:
+    monkeypatch.setenv("MABEL_MCP_PUBLIC_URL", "https://mabel.fly.dev/mcp")
+    body = build_create_agent_body(shop_name="Example Plumbing")
+    assert body["name"] == "Mabel"
+    assert body["model"] == "grok-voice-think-fast-2.0"
+    assert "latest" not in body["model"]
+    assert body["voice"] == "eve"
+    assert body["voice_clone"] is False
+    assert body["opening_disclosure"] == OPENING_DISCLOSURE
+    assert "Never quote a price" in body["instructions"]
+    assert "Never invent an arrival" in body["instructions"]
+    assert body["tools"] == [
         {
-            "shop_name": "Example Plumbing",
-            "agent_id": "agent_shop_a",
-            "template_name": "Mabel",
-            "model": "grok-voice-think-fast-2.0",
-            "console_template": None,
+            "type": "mcp",
+            "server_label": "mabel",
+            "server_url": "https://mabel.fly.dev/mcp",
+            "allowed_tools": list(MABEL_MCP_TOOLS),
         }
     ]
+    assert VOICE_AGENTS_URL == "https://api.x.ai/v1/voice-agents"
 
 
-def test_stub_client_refuses_under_pytest(monkeypatch) -> None:
+def test_parse_agent_id_reads_returned_id_and_never_invents() -> None:
+    assert parse_agent_id({"id": "agent_real"}) == "agent_real"
+    assert parse_agent_id({"agent_id": " agent_alt "}) == "agent_alt"
+    assert parse_agent_id({"data": {"id": "agent_nested"}}) == "agent_nested"
+    with pytest.raises(VoiceAgentError, match="did not get a voice agent id"):
+        parse_agent_id({"ok": True})
+
+
+def test_production_client_refuses_under_pytest(monkeypatch) -> None:
     monkeypatch.setenv("XAI_API_KEY", "not-a-real-key")
     assert os.environ.get("PYTEST_CURRENT_TEST")
     with pytest.raises(VoiceAgentError, match="will not call xAI from tests"):
-        StubXaiVoiceAgentClient().create_from_template(shop_name="Example Plumbing")
+        XaiHttpVoiceAgentClient().create_from_template(shop_name="Example Plumbing")
 
 
-def test_stub_client_fails_closed_without_key(monkeypatch) -> None:
+def test_production_client_fails_closed_without_key(monkeypatch) -> None:
     monkeypatch.delenv("XAI_API_KEY", raising=False)
     monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
     with pytest.raises(VoiceAgentError, match="xAI is not configured"):
-        StubXaiVoiceAgentClient().create_from_template(shop_name="Example Plumbing")
+        XaiHttpVoiceAgentClient().create_from_template(shop_name="Example Plumbing")
 
 
-def test_stub_client_does_not_call_xai_when_key_present(monkeypatch) -> None:
+def test_production_client_uses_documented_shape_without_live_network(monkeypatch) -> None:
     monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
     monkeypatch.setenv("XAI_API_KEY", "not-a-real-key")
-    with pytest.raises(VoiceAgentError, match="not creating voice agents from this stub"):
-        StubXaiVoiceAgentClient().create_from_template(shop_name="Example Plumbing")
+    monkeypatch.setenv("MABEL_MCP_PUBLIC_URL", "https://mabel.fly.dev/mcp")
+    captured: dict = {}
+
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            return {"id": "agent_from_api"}
+
+    def fake_post(url, *, headers, json, timeout):
+        captured["url"] = url
+        captured["headers"] = headers
+        captured["json"] = json
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr("httpx.post", fake_post)
+    agent_id = XaiHttpVoiceAgentClient().create_from_template(shop_name="Example Plumbing")
+    assert agent_id == "agent_from_api"
+    assert captured["url"] == VOICE_AGENTS_URL
+    assert captured["json"]["model"] == "grok-voice-think-fast-2.0"
+    assert captured["json"]["tools"][0]["server_url"] == "https://mabel.fly.dev/mcp"
+    assert "not-a-real-key" in captured["headers"]["Authorization"]
+
+
+def test_production_client_fails_closed_without_inventing_an_id(monkeypatch) -> None:
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)
+    monkeypatch.setenv("XAI_API_KEY", "not-a-real-key")
+
+    class FakeResponse:
+        status_code = 404
+
+        def json(self):
+            return {"error": "not found"}
+
+    monkeypatch.setattr("httpx.post", lambda *args, **kwargs: FakeResponse())
+    with pytest.raises(VoiceAgentError, match="could not create a voice agent"):
+        XaiHttpVoiceAgentClient().create_from_template(shop_name="Example Plumbing")
 
 
 @pytest.mark.parametrize(

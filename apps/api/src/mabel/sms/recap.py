@@ -1,6 +1,7 @@
-"""7am recap queue. Non-emergencies wait. This PR does not send the recap.
+"""7am recap queue. Non-emergencies wait.
 
 recap_at is the next 7am in the shop's timezone. Deterministic. No model.
+Send due items with `python -m mabel.sms.recap_send`. Not a cron.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ class RecapItem:
     recap_at: datetime
     id: UUID = field(default_factory=uuid4)
     lead_id: UUID | None = None
+    sent_at: datetime | None = None
 
 
 _queue: list[RecapItem] = []
@@ -72,6 +74,15 @@ def queue_morning_recap(tenant_id: UUID, *, lead_id: UUID | None = None) -> Reca
 
         persist_recap(item)
     return item
+
+
+def replace_recap(item: RecapItem) -> None:
+    """Swap a queue item in place (sent_at). Does not delete."""
+    for index, current in enumerate(_queue):
+        if current.id == item.id:
+            _queue[index] = item
+            return
+    _queue.append(item)
 
 
 def _database_url() -> str | None:
