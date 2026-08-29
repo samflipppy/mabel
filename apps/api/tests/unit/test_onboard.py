@@ -124,6 +124,7 @@ def test_onboard_status_is_draft_and_agent_stays_not_live() -> None:
 
 def test_onboard_defaults_timezone_and_writes_memory_directory(monkeypatch) -> None:
     monkeypatch.delenv("DATABASE_URL", raising=False)
+    monkeypatch.delenv("MABEL_ADMIN_TOKEN", raising=False)
     reset_directory()
     shop = _onboard(timezone="")
     assert shop.packet.timezone == "America/New_York"

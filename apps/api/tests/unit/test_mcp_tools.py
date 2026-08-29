@@ -38,6 +38,7 @@ def test_write_tools_use_token_tenant_not_argument(monkeypatch) -> None:
     leads = store().for_tenant(tenant_a)
     assert len(leads) == 1
     assert str(leads[0].id) == created["lead_id"]
+    assert leads[0].dollars_won is None
     assert store().for_tenant(tenant_b) == []
 
 
