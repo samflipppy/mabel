@@ -39,9 +39,12 @@ def test_every_collection_hook_is_scoped_to_its_own_directory():
         )
         assert hook is not None
         source = ast.get_source_segment(path.read_text(encoding="utf-8"), hook) or ""
-        assert "fspath" in source or "path" in source, (
+        # The hook is handed every item in the session. It has to narrow to the
+        # ones it means — by path, or by which fixtures they ask for — or it
+        # silently disables the whole repo's tests.
+        assert "fixturenames" in source or "fspath" in source, (
             f"{path.relative_to(REPO)} modifies collection for the whole session "
-            "without filtering by path. That skips every test in the repo."
+            "without narrowing. That skips every test in the repo."
         )
 
 

@@ -208,8 +208,10 @@ async def set_status(
             """
             UPDATE leads
             SET status = :status,
-                lost_reason = CASE WHEN :status = 'lost' THEN :reason ELSE lost_reason END,
-                won_at = CASE WHEN :status = 'won' THEN coalesce(won_at, now()) ELSE won_at END,
+                lost_reason = CASE WHEN cast(:status as text) = 'lost'
+                               THEN cast(:reason as text) ELSE lost_reason END,
+                won_at = CASE WHEN cast(:status as text) = 'won'
+                         THEN coalesce(won_at, now()) ELSE won_at END,
                 first_touched_at = coalesce(first_touched_at, now()),
                 updated_at = now()
             WHERE id = :id

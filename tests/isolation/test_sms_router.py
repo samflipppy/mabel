@@ -201,14 +201,23 @@ class TestFollowupsAndExpansion:
                 {"p": ALPHA_PHONE},
             )
             context = stored.scalar_one()
-            assert context["last_list"][0]["name"] == "Henderson"
+            # Order is oldest-first, and the shared fixture seeds a lead of its
+            # own, so assert membership rather than position.
+            names = [item["name"] for item in context["last_list"]]
+            assert "Henderson" in names
 
     async def test_a_following_digit_expands_that_item(self, app_engine, owners):
         alpha, _beta = owners
         sender = await sender_for(app_engine, ALPHA_PHONE)
         async with tenant_scope(alpha, engine=app_engine) as conn:
-            await handle(conn, sender, "FU", now=NOW)
-            reply = await handle(conn, sender, "1", now=NOW)
+            listing = await handle(conn, sender, "FU", now=NOW)
+            # Expand whichever position Henderson landed in.
+            position = [
+                index
+                for index, line in enumerate(listing.body.splitlines()[1:], start=1)
+                if "Henderson" in line
+            ][0]
+            reply = await handle(conn, sender, str(position), now=NOW)
             assert "Henderson" in reply.body
 
     async def test_a_digit_with_no_list_says_so(self, app_engine, owners):
@@ -222,9 +231,10 @@ class TestFollowupsAndExpansion:
         alpha, _beta = owners
         sender = await sender_for(app_engine, ALPHA_PHONE)
         async with tenant_scope(alpha, engine=app_engine) as conn:
-            await handle(conn, sender, "FU", now=NOW)
+            listing = await handle(conn, sender, "FU", now=NOW)
+            shown = len([line for line in listing.body.splitlines()[1:] if line.strip()])
             reply = await handle(conn, sender, "9", now=NOW)
-            assert "only 1" in reply.body
+            assert f"only {shown}" in reply.body
 
 
 class TestStop:

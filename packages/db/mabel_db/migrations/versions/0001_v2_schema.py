@@ -530,6 +530,28 @@ CREATE POLICY tenant_self ON tenants
   USING (id = nullif(current_setting('app.tenant_id', true), '')::uuid);
 GRANT SELECT, UPDATE ON tenants TO mabel_app;
 
+-- Without this, mabel_app holds SELECT on every table and can see none of
+-- them: Postgres reports a table in a schema you cannot USE as though it does
+-- not exist, which is a confusing hour if you have not hit it before.
+--
+-- A brand new database grants USAGE on `public` to PUBLIC, so this is
+-- redundant there and the omission would go unnoticed. It stops being
+-- redundant the moment anything recreates the schema, which is what the
+-- isolation suite does on every run -- and is how this was found.
+GRANT USAGE ON SCHEMA public TO mabel_app;
+
+-- mabel_admin owns the SECURITY DEFINER resolution functions in 0003-0006, so
+-- those functions execute with its privileges. BYPASSRLS lets it past row
+-- policies; it does not grant table privileges, and it does not grant schema
+-- usage. Without these two lines every resolution function fails with
+-- "relation tenants does not exist" -- which is how this was found.
+--
+-- Kept to the three tables those functions actually read. mabel_admin is the
+-- migrator and cross-tenant analytics role, and there is no reason for a
+-- definer function to reach further than it needs to.
+GRANT USAGE ON SCHEMA public TO mabel_admin;
+GRANT SELECT ON tenants, locations, users TO mabel_admin;
+
 -- Global, not tenant-scoped.
 GRANT SELECT ON vertical_rulesets TO mabel_app;
 GRANT SELECT, INSERT ON audit_log TO mabel_app;

@@ -199,7 +199,7 @@ async def enqueue(
                 """
                 INSERT INTO job_queue (tenant_id, kind, payload, run_after, max_attempts)
                 VALUES (:tenant_id, :kind, cast(:payload as jsonb),
-                        coalesce(:run_after, now()), :max_attempts)
+                        coalesce(cast(:run_after as timestamptz), now()), :max_attempts)
                 RETURNING id
                 """
             ),
@@ -226,7 +226,16 @@ async def depth(engine: AsyncEngine) -> dict[str, int]:
                 """
                 SELECT
                   count(*) FILTER (
-                    WHERE completed_at IS NULL AND failed_at IS NULL AND run_after <= now()
+                    WHERE completed_at IS NULL
+                      AND failed_at IS NULL
+                      AND run_after <= now()
+                      -- Not already being worked on. `ready` means "waiting
+                      -- for a worker", which is how the runbook reads it: a
+                      -- rising ready count with a healthy worker means jobs
+                      -- are failing and retrying. Counting in-flight jobs here
+                      -- too made that number say nothing.
+                      AND (locked_at IS NULL
+                           OR locked_at < now() - make_interval(secs => :lease))
                   ) AS ready,
                   count(*) FILTER (
                     WHERE completed_at IS NULL AND failed_at IS NULL AND locked_at IS NOT NULL
@@ -234,7 +243,8 @@ async def depth(engine: AsyncEngine) -> dict[str, int]:
                   count(*) FILTER (WHERE failed_at IS NOT NULL) AS failed
                 FROM job_queue
                 """
-            )
+            ),
+            {"lease": LEASE_SECONDS},
         )
         row = result.mappings().one()
         return {k: int(v) for k, v in row.items()}

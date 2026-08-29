@@ -128,8 +128,14 @@ async def resolve_or_create(
             INSERT INTO contacts (tenant_id, display_name, primary_phone, phones,
                                   first_seen_at, last_seen_at)
             VALUES (:tenant_id, :name, :phone,
-                    CASE WHEN :phone IS NULL THEN '{}'::text[] ELSE ARRAY[:phone] END,
-                    coalesce(:now, now()), coalesce(:now, now()))
+                    -- Explicit casts throughout. asyncpg infers a
+                    -- parameter's type from where it is used, and inside
+                    -- CASE, coalesce and ARRAY[] there is nothing to infer
+                    -- from: it reports "could not determine data type".
+                    CASE WHEN cast(:phone as text) IS NULL THEN '{}'::text[]
+                         ELSE ARRAY[cast(:phone as text)] END,
+                    coalesce(cast(:now as timestamptz), now()),
+                    coalesce(cast(:now as timestamptz), now()))
             RETURNING id, display_name, primary_phone, phones, first_seen_at, last_seen_at
             """
         ),
@@ -141,7 +147,10 @@ async def resolve_or_create(
 async def touch(conn: AsyncConnection, contact_id: UUID, *, now: datetime | None = None) -> None:
     """Record that we heard from them. Drives 'last seen' in the portal."""
     await conn.execute(
-        text("UPDATE contacts SET last_seen_at = coalesce(:now, now()) WHERE id = :id"),
+        text(
+            "UPDATE contacts SET last_seen_at = coalesce(cast(:now as timestamptz), now()) "
+            "WHERE id = :id"
+        ),
         {"id": contact_id, "now": now},
     )
 

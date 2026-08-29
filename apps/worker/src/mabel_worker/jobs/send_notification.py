@@ -26,6 +26,7 @@ from mabel_telnyx.client import (
     FakeTelnyxClient,
     SendFailed,
     TelnyxClient,
+    TelnyxRefusedUnderTest,
     TelnyxUnavailable,
     delivery_risk,
 )
@@ -43,7 +44,15 @@ def build_client() -> Client | None:
     """
     try:
         return TelnyxClient()
-    except TelnyxUnavailable:
+    except (TelnyxUnavailable, TelnyxRefusedUnderTest):
+        # Both mean the same thing here: we cannot construct a live client.
+        # Returning None makes the caller record each notification as failed
+        # with the reason, which is the correct unconfigured behaviour.
+        #
+        # Catching the under-pytest refusal as well is what makes that
+        # behaviour testable end to end. Without it the guard fires first and
+        # the job dies, which is a worse outcome than the one being tested and
+        # would also be the outcome for any other construction failure.
         return None
 
 

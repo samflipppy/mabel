@@ -103,7 +103,8 @@ async def mark_touched(
     await conn.execute(
         text(
             "UPDATE leads "
-            "SET first_touched_at = coalesce(first_touched_at, coalesce(:now, now())), "
+            "SET first_touched_at = "
+            "  coalesce(first_touched_at, coalesce(cast(:now as timestamptz), now())), "
             "    updated_at = now() "
             "WHERE id = :id"
         ),
@@ -126,10 +127,13 @@ async def set_status(
             """
             UPDATE leads
             SET status = :status,
-                lost_reason = CASE WHEN :status = 'lost' THEN :lost_reason ELSE lost_reason END,
-                won_at = CASE WHEN :status = 'won' THEN coalesce(won_at, coalesce(:now, now()))
+                lost_reason = CASE WHEN cast(:status as text) = 'lost'
+                               THEN cast(:lost_reason as text) ELSE lost_reason END,
+                won_at = CASE WHEN cast(:status as text) = 'won'
+                              THEN coalesce(won_at, coalesce(cast(:now as timestamptz), now()))
                               ELSE won_at END,
-                first_touched_at = coalesce(first_touched_at, coalesce(:now, now())),
+                first_touched_at =
+                  coalesce(first_touched_at, coalesce(cast(:now as timestamptz), now())),
                 updated_at = now()
             WHERE id = :id
             """

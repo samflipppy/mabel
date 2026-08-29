@@ -269,7 +269,7 @@ async def set_notifications(
             UPDATE users
             SET notify_emergencies = :emergencies,
                 notify_recap = :recap,
-                phone_e164 = coalesce(:phone, phone_e164)
+                phone_e164 = coalesce(cast(:phone as text), phone_e164)
             WHERE id = :id
             RETURNING id
             """
