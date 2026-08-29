@@ -1,21 +1,40 @@
 """Owner texts. Emergencies now, everything else at 7am local.
 
-Never send if Telnyx is missing. Never log a key.
+Never text a customer. Never send if Telnyx is missing. Never log a key.
+10DLC: nothing goes to a real number until the campaign clears.
 """
 
-from __future__ import annotations
+from mabel.sms.client import FakeTelnyxSmsClient, SmsError, TelnyxHttpSmsClient, TelnyxSmsClient
+from mabel.sms.notify import (
+    REASON_DOLLAR,
+    REASON_RECAP,
+    REASON_TELNYX,
+    SmsAttempt,
+    bind_sms_client,
+    render_emergency_body,
+    reset_sms,
+    send_owner_emergency_sms,
+    sms_attempts,
+)
+from mabel.sms.recap import RecapItem, queue_morning_recap, recap_queue, reset_recap, set_clock
 
-from mabel.platform.config import telnyx_ready
-
-
-class SmsError(RuntimeError):
-    pass
-
-
-def notify_owner(*, body: str, to: str | None = None) -> dict[str, str]:
-    if not telnyx_ready():
-        raise SmsError("Mabel cannot text the owner. Telnyx is not configured.")
-    if not body.strip():
-        raise SmsError("Mabel will not send an empty text.")
-    # Sending is not wired. A missing key already failed closed above.
-    raise SmsError("Mabel is not sending texts from this stub.")
+__all__ = [
+    "FakeTelnyxSmsClient",
+    "REASON_DOLLAR",
+    "REASON_RECAP",
+    "REASON_TELNYX",
+    "RecapItem",
+    "SmsAttempt",
+    "SmsError",
+    "TelnyxHttpSmsClient",
+    "TelnyxSmsClient",
+    "bind_sms_client",
+    "queue_morning_recap",
+    "recap_queue",
+    "render_emergency_body",
+    "reset_recap",
+    "reset_sms",
+    "send_owner_emergency_sms",
+    "set_clock",
+    "sms_attempts",
+]

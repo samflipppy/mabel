@@ -13,6 +13,8 @@ from mabel.leads.memory import Lead, Note, Store, reset_memory_store
 from mabel.leads.memory import store as memory_store
 from mabel.leads.persist import persist_lead, persist_note, using_database
 from mabel.shops.packet import PacketError, normalize_zip, packet_for, reset_packets
+from mabel.sms.notify import REASON_RECAP, reset_sms, send_owner_emergency_sms
+from mabel.sms.recap import queue_morning_recap, reset_recap
 
 READ_TOOLS = (
     "lookup_customer",
@@ -57,6 +59,8 @@ def store() -> Store:
 def reset_store() -> None:
     reset_memory_store()
     reset_packets()
+    reset_sms()
+    reset_recap()
 
 
 def _save_lead(lead: Lead) -> None:
@@ -164,12 +168,16 @@ def escalate_emergency(
             "context": context or {},
         },
     )
-    if not result["escalate"] or not result["trigger"]:
+    notify = result["notify"]
+    if not result["escalate"] or not result["trigger"] or notify != "now":
+        recap = queue_morning_recap(tenant_id)
         return {
             "escalated": False,
             "notify": "recap_7am",
             "reason": "No matching emergency rule.",
             "capture_gaps": result["capture_gaps"],
+            "sms": {"sent": False, "reason": REASON_RECAP},
+            "recap": {"queued": True, "recap_at": recap.recap_at.isoformat()},
         }
     lead = Lead(
         id=uuid4(),
@@ -182,13 +190,22 @@ def escalate_emergency(
         source=str((captured or {}).get("source") or ""),
         emergency_code=result["trigger"],
     )
+    # Lead first. SMS failure must not lose it.
     _save_lead(lead)
+    sms = send_owner_emergency_sms(
+        tenant_id=tenant_id,
+        trigger=str(result["trigger"]),
+        address=lead.address,
+        problem=lead.problem,
+        callback=lead.callback,
+    )
     return {
         "escalated": True,
         "notify": "now",
         "trigger": result["trigger"],
         "lead_id": str(lead.id),
         "capture_gaps": result["capture_gaps"],
+        "sms": sms,
     }
 
 
