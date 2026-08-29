@@ -668,7 +668,7 @@ function TestTab() {
     },
     onError: (error) =>
       setProblem(
-        error instanceof ApiError ? error.detail : "Couldn't place the call.",
+        error instanceof ApiError ? error.detail : "Couldn't start a test call.",
       ),
   });
 
@@ -676,8 +676,8 @@ function TestTab() {
     <section className="space-y-4">
       <h2 className="font-serif text-2xl">Hear her</h2>
       <p className="text-base text-[var(--taupe)]">
-        Mabel rings your mobile and answers as though you were a customer, with
-        exactly the settings above.
+        Mabel answers inbound. She will not ring you. Call your business line
+        and we&apos;ll tell you when it reaches her.
       </p>
       <button
         type="button"
@@ -685,7 +685,7 @@ function TestTab() {
         disabled={call.isPending}
         className="min-h-[64px] w-full rounded-lg bg-[var(--charcoal)] px-6 font-serif text-2xl text-white"
       >
-        {call.isPending ? "Calling…" : "Call Mabel now"}
+        {call.isPending ? "Checking…" : "Call Mabel now"}
       </button>
       {problem && <p className="text-base text-red-700">{problem}</p>}
       {result && <p className="text-base">{result.message}</p>}
