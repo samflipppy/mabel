@@ -1,0 +1,72 @@
+{
+  "vertical": "plumbing",
+  "version": 3,
+  "effective_from": "2026-08-01",
+  "verified": true,
+  "emergency_triggers": [
+    {
+      "code": "BURST_PIPE",
+      "severity": "escalate_now",
+      "phrases": [
+        "burst pipe",
+        "pipe burst",
+        "pipe broke",
+        "pipe is broken",
+        "broken pipe",
+        "pipe split",
+        "pipe exploded"
+      ]
+    },
+    {
+      "code": "WATER_NEAR_ELECTRICAL",
+      "severity": "escalate_now",
+      "phrases": [
+        "water near electrical",
+        "water by the electrical",
+        "water on the outlet",
+        "water near the panel",
+        "water in the breaker",
+        "water around the panel"
+      ]
+    },
+    {
+      "code": "SEWAGE_BACKUP",
+      "severity": "escalate_now",
+      "phrases": [
+        "sewage backup",
+        "sewer backup",
+        "sewage",
+        "toilet backing up",
+        "waste water coming up",
+        "raw sewage"
+      ]
+    },
+    {
+      "code": "NO_WATER_WHOLE_HOUSE",
+      "severity": "escalate_now",
+      "phrases": [
+        "no water in the house",
+        "no water to the house",
+        "no water anywhere",
+        "whole house has no water",
+        "main water is out",
+        "no water whole house"
+      ]
+    },
+    {
+      "code": "ACTIVE_FLOODING",
+      "severity": "escalate_now",
+      "phrases": [
+        "active flooding",
+        "flooding",
+        "water everywhere",
+        "water coming in",
+        "ceiling is pouring",
+        "active leak"
+      ]
+    }
+  ],
+  "required_capture": ["name", "address", "callback", "problem", "urgency", "source"],
+  "never_say": ["price", "estimate_range", "hourly_rate", "arrival_time"],
+  "fixtures": ["plumbing_burst_pipe.json", "plumbing_slow_drain_2am.json"]
+}

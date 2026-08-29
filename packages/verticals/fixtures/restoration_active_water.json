@@ -1,0 +1,26 @@
+{
+  "id": "restoration_active_water",
+  "vertical": "restoration",
+  "rule_version": 1,
+  "input": {
+    "called_at": "2026-01-20T03:22:00-05:00",
+    "utterances": [
+      "We're still taking on water from a broken supply line. I need mitigation."
+    ],
+    "captured": {
+      "name": "Casey Example",
+      "address": "500 Example Way, Rocky River OH 44116",
+      "callback": "+12165550104",
+      "problem": "active water intrusion from a supply line",
+      "urgency": "water still coming in",
+      "source": "insurance"
+    },
+    "context": {}
+  },
+  "expect": {
+    "trigger": "ACTIVE_WATER_INTRUSION",
+    "escalate": true,
+    "notify": "now",
+    "capture_gaps": []
+  }
+}

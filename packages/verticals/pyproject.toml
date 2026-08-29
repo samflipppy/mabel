@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mabel-verticals"
+version = "0.1.0"
+description = "Mabel vertical rule library and golden fixtures"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "Mabel" }]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+include = ["mabel_verticals*"]
+
+[tool.setuptools.package-data]
+mabel_verticals = []
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+

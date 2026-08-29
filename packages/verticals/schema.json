@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hiremabel.com/schemas/vertical-rules.v1.json",
+  "title": "Mabel vertical rule set",
+  "description": "What counts as an emergency, what Mabel must collect, and what she must never say. Matching is deterministic phrase matching, never an LLM.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "vertical",
+    "version",
+    "effective_from",
+    "verified",
+    "emergency_triggers",
+    "required_capture",
+    "never_say",
+    "fixtures"
+  ],
+  "properties": {
+    "vertical": { "type": "string", "minLength": 1 },
+    "version": { "type": "integer", "minimum": 1 },
+    "effective_from": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "verified": {
+      "type": "boolean",
+      "description": "Sam verifies before anything deploys. Draft verticals stay false."
+    },
+    "emergency_triggers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/trigger" }
+    },
+    "required_capture": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": ["name", "address", "callback", "problem", "urgency", "source"]
+      }
+    },
+    "never_say": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["price", "estimate_range", "hourly_rate", "arrival_time"]
+      }
+    },
+    "fixtures": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^[a-z0-9_]+\\.json$" }
+    }
+  },
+  "$defs": {
+    "trigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "phrases"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]+$" },
+        "severity": { "type": "string", "enum": ["escalate_now"] },
+        "phrases": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 3 }
+        },
+        "require": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "outdoor_temp_f_lte": { "type": "integer" },
+            "vulnerable_occupant": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

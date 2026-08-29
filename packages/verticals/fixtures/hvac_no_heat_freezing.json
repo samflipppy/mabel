@@ -1,0 +1,29 @@
+{
+  "id": "hvac_no_heat_freezing",
+  "vertical": "hvac",
+  "rule_version": 1,
+  "input": {
+    "called_at": "2026-01-18T21:40:00-05:00",
+    "utterances": [
+      "The furnace is out and there's no heat in the house."
+    ],
+    "captured": {
+      "name": "Jordan Example",
+      "address": "300 Example Rd, Parma OH 44129",
+      "callback": "+12165550102",
+      "problem": "furnace is out, no heat",
+      "urgency": "house is getting cold",
+      "source": "neighbor"
+    },
+    "context": {
+      "outdoor_temp_f": 18,
+      "vulnerable_occupant": false
+    }
+  },
+  "expect": {
+    "trigger": "NO_HEAT_BELOW_FREEZING",
+    "escalate": true,
+    "notify": "now",
+    "capture_gaps": []
+  }
+}

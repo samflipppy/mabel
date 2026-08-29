@@ -1,0 +1,52 @@
+{
+  "vertical": "hvac",
+  "version": 1,
+  "effective_from": "2026-08-01",
+  "verified": false,
+  "emergency_triggers": [
+    {
+      "code": "GAS_SMELL",
+      "severity": "escalate_now",
+      "phrases": [
+        "gas smell",
+        "smell gas",
+        "smells like gas",
+        "gas leak",
+        "rotten egg smell"
+      ]
+    },
+    {
+      "code": "NO_HEAT_BELOW_FREEZING",
+      "severity": "escalate_now",
+      "phrases": [
+        "no heat",
+        "heat is out",
+        "furnace is out",
+        "furnace died",
+        "not heating",
+        "no heat in the house"
+      ],
+      "require": {
+        "outdoor_temp_f_lte": 32
+      }
+    },
+    {
+      "code": "NO_COOLING_VULNERABLE_OCCUPANT",
+      "severity": "escalate_now",
+      "phrases": [
+        "no cooling",
+        "ac is out",
+        "air conditioning is out",
+        "no air",
+        "ac died",
+        "not cooling"
+      ],
+      "require": {
+        "vulnerable_occupant": true
+      }
+    }
+  ],
+  "required_capture": ["name", "address", "callback", "problem", "urgency", "source"],
+  "never_say": ["price", "estimate_range", "hourly_rate", "arrival_time"],
+  "fixtures": ["hvac_no_heat_freezing.json"]
+}

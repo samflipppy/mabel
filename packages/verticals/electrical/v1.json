@@ -1,0 +1,44 @@
+{
+  "vertical": "electrical",
+  "version": 1,
+  "effective_from": "2026-08-01",
+  "verified": false,
+  "emergency_triggers": [
+    {
+      "code": "BURNING_SMELL",
+      "severity": "escalate_now",
+      "phrases": [
+        "burning smell",
+        "smells like burning",
+        "smell of burning",
+        "wires burning",
+        "burning plastic"
+      ]
+    },
+    {
+      "code": "SPARKING",
+      "severity": "escalate_now",
+      "phrases": [
+        "sparking",
+        "sparks",
+        "outlet sparking",
+        "panel sparking",
+        "arcing"
+      ]
+    },
+    {
+      "code": "EXPOSED_WIRE",
+      "severity": "escalate_now",
+      "phrases": [
+        "exposed wire",
+        "exposed wires",
+        "bare wire",
+        "live wire",
+        "wire hanging"
+      ]
+    }
+  ],
+  "required_capture": ["name", "address", "callback", "problem", "urgency", "source"],
+  "never_say": ["price", "estimate_range", "hourly_rate", "arrival_time"],
+  "fixtures": ["electrical_burning_smell.json"]
+}
