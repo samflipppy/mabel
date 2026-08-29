@@ -79,14 +79,15 @@ def _load_sql() -> str:
     carries over between runs.
 
     0002 is skipped: it is pg_cron, which a scratch Postgres does not have and
-    which none of these tests exercise. 0003 and 0004 are included, because
-    they carry the resolution functions — without them no inbound call can be
-    routed and no inbound SMS can be attributed.
+    which none of these tests exercise. 0003, 0004 and 0005 are included: they
+    carry the three resolution functions, without which no inbound call can be
+    routed, no inbound SMS attributed, and no portal session resolved.
     """
     parts = [
         "\n".join(_module(MIGRATIONS / "0001_v2_schema.py").SECTIONS),
         _module(MIGRATIONS / "0003_did_resolution.py").FUNCTION,
         _module(MIGRATIONS / "0004_sms_sender_resolution.py").FUNCTION,
+        _module(MIGRATIONS / "0005_portal_session_resolution.py").FUNCTION,
     ]
     return "\n".join(parts)
 
