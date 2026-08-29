@@ -199,7 +199,7 @@ async def enqueue(
                 """
                 INSERT INTO job_queue (tenant_id, kind, payload, run_after, max_attempts)
                 VALUES (:tenant_id, :kind, cast(:payload as jsonb),
-                        coalesce(:run_after, now()), :max_attempts)
+                        coalesce(cast(:run_after as timestamptz), now()), :max_attempts)
                 RETURNING id
                 """
             ),

@@ -182,7 +182,8 @@ async def save_notify(body: NotifyStep, user: CurrentUserDep, conn: TenantConn) 
     await conn.execute(
         text(
             "UPDATE users SET phone_e164 = :phone, notify_emergencies = true, "
-            "notify_recap = true, full_name = coalesce(:name, full_name) WHERE id = :id"
+            "notify_recap = true, full_name = coalesce(CAST(:name AS text), full_name) "
+            "WHERE id = :id"
         ),
         {"phone": phone, "name": body.full_name, "id": user.user_id},
     )

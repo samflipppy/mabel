@@ -169,9 +169,9 @@ async def _mark_won(conn, sender, command, now) -> Reply:
             """
             UPDATE leads
             SET status = 'won',
-                won_at = coalesce(won_at, :now),
-                first_touched_at = coalesce(first_touched_at, :now),
-                value_cents = coalesce(:value, value_cents),
+                won_at = coalesce(won_at, CAST(:now AS timestamptz)),
+                first_touched_at = coalesce(first_touched_at, CAST(:now AS timestamptz)),
+                value_cents = coalesce(CAST(:value AS bigint), value_cents),
                 updated_at = now()
             WHERE id = :id
             """
@@ -203,7 +203,7 @@ async def _mark_lost(conn, sender, command, now) -> Reply:
             UPDATE leads
             SET status = 'lost',
                 lost_reason = :reason,
-                first_touched_at = coalesce(first_touched_at, :now),
+                first_touched_at = coalesce(first_touched_at, CAST(:now AS timestamptz)),
                 updated_at = now()
             WHERE id = :id
             """
