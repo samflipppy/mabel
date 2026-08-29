@@ -13,11 +13,7 @@ from mabel.leads.memory import Lead, Note, Store, reset_memory_store
 from mabel.leads.memory import store as memory_store
 from mabel.leads.persist import persist_lead, persist_note, using_database
 from mabel.shops.packet import PacketError, normalize_zip, packet_for, reset_packets
-from mabel.sms.notify import (
-    REASON_RECAP,
-    reset_sms as reset_sms_attempts,
-    send_owner_emergency_sms,
-)
+from mabel.sms.notify import REASON_RECAP, reset_sms, send_owner_emergency_sms
 from mabel.sms.recap import queue_morning_recap, reset_recap
 
 READ_TOOLS = (
@@ -63,7 +59,7 @@ def store() -> Store:
 def reset_store() -> None:
     reset_memory_store()
     reset_packets()
-    reset_sms_attempts()
+    reset_sms()
     reset_recap()
 
 
