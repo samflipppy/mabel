@@ -20,12 +20,17 @@ class UnknownDidError(LookupError):
     """This number is not one of ours."""
 
 
+class DuplicateDidError(ValueError):
+    """This inbound number already belongs to a shop."""
+
+
 @dataclass(frozen=True)
 class Tenant:
     id: UUID
     vertical: str
     name: str
     packet: ShopPacket | None = None
+    status: str = "draft"
 
 
 class DidDirectory:

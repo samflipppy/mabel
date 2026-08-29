@@ -11,7 +11,7 @@ If Telnyx or xAI keys are missing, the webhook fails closed.
 src/mabel/
   voice/       # webhook, DID, pinned voice model
   mcp/         # eight tools, tenant from the token
-  shops/       # shop packet; get_service_area uses that tenant's zips
+  shops/       # packet, onboard write path, POST /shops (admin, not MCP)
   leads/
   sms/
   reports/

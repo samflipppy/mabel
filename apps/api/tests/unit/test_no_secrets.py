@@ -11,6 +11,18 @@ def test_agent_is_not_live() -> None:
     assert AGENT_LIVE is False
 
 
+def test_onboard_does_not_take_agent_live() -> None:
+    from mabel.shops import onboard, store
+    from mabel.shops.http import router
+
+    for module in (onboard, store):
+        source = Path(module.__file__).read_text(encoding="utf-8")
+        assert "AGENT_LIVE = True" not in source
+        assert "status" in source.lower() or module is store
+    assert any(getattr(route, "path", "") == "/shops" for route in router.routes)
+    assert AGENT_LIVE is False
+
+
 def test_repo_does_not_commit_dotenv_or_key_files() -> None:
     hits: list[str] = []
     skip = {".git", "node_modules", ".next", ".venv"}
