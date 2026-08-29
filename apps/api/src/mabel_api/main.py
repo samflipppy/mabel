@@ -80,11 +80,14 @@ def create_app() -> FastAPI:
 
     app.include_router(mcp_router)
 
-    from mabel_api.routes import calls, dashboard, leads
+    from mabel_api.routes import calls, config, dashboard, leads, settings, test_call
 
     app.include_router(dashboard.router)
     app.include_router(calls.router)
     app.include_router(leads.router)
+    app.include_router(config.router)
+    app.include_router(test_call.router)
+    app.include_router(settings.router)
 
     @app.get("/health")
     async def health() -> JSONResponse:
