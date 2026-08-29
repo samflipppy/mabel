@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
 
@@ -73,17 +74,21 @@ class RlsConn:
         if "insert into leads" in lowered:
             self.leads.append(tuple(params))
             return _Rows([])
+        if "update leads set sms_sent" in lowered:
+            return _Rows([])
         if "insert into notes" in lowered:
             self.notes.append(tuple(params))
             return _Rows([])
         if "from leads" in lowered:
             if self._tenant is None:
                 return _Rows([])
-            visible = [
-                tuple(row) + (None,)
-                for row in self.leads
-                if str(row[1]) == self._tenant
-            ]
+            visible = []
+            for row in self.leads:
+                if str(row[1]) == self._tenant:
+                    created = datetime.now(timezone.utc)
+                    sms_sent = row[9] if len(row) > 9 else None
+                    sms_reason = row[10] if len(row) > 10 else None
+                    visible.append(tuple(row[:9]) + (None, created, sms_sent, sms_reason))
             return _Rows(visible)
         if "from notes" in lowered:
             if self._tenant is None:
@@ -265,7 +270,7 @@ def test_postgres_lead_insert_sets_local_and_omits_dollars_won() -> None:
     insert_params = next(
         params for query, params in zip(conn.queries, conn.params) if "INSERT INTO leads" in query
     )
-    assert len(insert_params) == 9
+    assert len(insert_params) == 11
     assert str(lead.id) in insert_params
     assert str(tenant) in insert_params
     assert "3800.00" not in insert_params

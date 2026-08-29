@@ -14,6 +14,9 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
               <Link href="/">Overnight</Link>
             </Button>
             <Button variant="ghost" size="sm" asChild>
+              <Link href="/settings">Settings</Link>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
               <Link href="/report">Monthly report</Link>
             </Button>
             <Button size="sm" asChild>

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from uuid import UUID
 
 from fastapi.testclient import TestClient
 
@@ -190,3 +191,142 @@ def test_shops_http_does_not_log_the_token() -> None:
     assert "hmac.compare_digest" not in source
     # Auth comparison lives in shops.auth; the route only reads the header name.
     assert "authorization" in lowered
+
+
+def test_patch_replaces_zip_list_and_keeps_other_tenant(monkeypatch) -> None:
+    client = _client(monkeypatch)
+    shop_a = client.post(
+        "/shops",
+        json=_body(name="Shop A", inbound_did="+12165550101", service_area_zips=["44107"]),
+        headers=_auth(),
+    )
+    shop_b = client.post(
+        "/shops",
+        json=_body(
+            name="Shop B",
+            inbound_did="+12165550102",
+            owner_sms_e164="+12165550112",
+            service_area_zips=["44102"],
+        ),
+        headers=_auth(),
+    )
+    id_a = shop_a.json()["tenant_id"]
+    id_b = shop_b.json()["tenant_id"]
+    patched = client.patch(
+        f"/shops/{id_a}",
+        json={"service_area_zips": ["44114", "44107"]},
+        headers=_auth(),
+    )
+    assert patched.status_code == 200
+    assert patched.json()["service_area_zips"] == ["44114", "44107"]
+    assert patched.json()["live"] is False
+    assert AGENT_LIVE is False
+    got_a = client.get(f"/shops/{id_a}", headers=_auth())
+    got_b = client.get(f"/shops/{id_b}", headers=_auth())
+    assert got_a.json()["service_area_zips"] == ["44114", "44107"]
+    assert got_b.json()["service_area_zips"] == ["44102"]
+    assert got_b.json()["name"] == "Shop B"
+    assert id_a not in got_b.text or got_b.json()["tenant_id"] == id_b
+
+
+def test_patch_dollar_greeting_notes_is_400(monkeypatch) -> None:
+    client = _client(monkeypatch)
+    created = client.post("/shops", json=_body(inbound_did="+12165550133"), headers=_auth())
+    tenant_id = created.json()["tenant_id"]
+    response = client.patch(
+        f"/shops/{tenant_id}",
+        json={"greeting_notes": "After-hours rate is 89.00"},
+        headers=_auth(),
+    )
+    assert response.status_code == 400
+    assert "dollar" in response.json()["detail"]
+
+
+def test_get_other_tenant_does_not_leak_this_shop(monkeypatch) -> None:
+    client = _client(monkeypatch)
+    shop_a = client.post(
+        "/shops",
+        json=_body(name="Shop A", inbound_did="+12165550101", service_area_zips=["44107"]),
+        headers=_auth(),
+    )
+    missing = client.get(
+        "/shops/00000000-0000-0000-0000-000000000099",
+        headers=_auth(),
+    )
+    assert missing.status_code == 404
+    assert shop_a.json()["name"] not in missing.text
+
+
+def test_overnight_empty_when_no_leads(monkeypatch) -> None:
+    client = _client(monkeypatch)
+    created = client.post("/shops", json=_body(inbound_did="+12165550144"), headers=_auth())
+    tenant_id = created.json()["tenant_id"]
+    response = client.get(f"/shops/{tenant_id}/overnight", headers=_auth())
+    assert response.status_code == 200
+    data = response.json()
+    assert data["leads"] == []
+    assert data["shop_name"] == "Example Plumbing"
+
+
+def test_overnight_shows_captured_lead_not_invented(monkeypatch) -> None:
+    from mabel.mcp.tools import bind_tenant, call_tool, reset_tenant
+
+    client = _client(monkeypatch)
+    created = client.post("/shops", json=_body(inbound_did="+12165550155"), headers=_auth())
+    tenant_id = created.json()["tenant_id"]
+    bound = bind_tenant(UUID(tenant_id))
+    try:
+        call_tool(
+            "create_lead",
+            {
+                "name": "Pat Example",
+                "address": "100 Example Ave, Lakewood OH 44107",
+                "callback": "+12165550100",
+                "problem": "slow drain",
+                "urgency": "morning is fine",
+                "source": "google",
+            },
+        )
+    finally:
+        reset_tenant(bound)
+    response = client.get(f"/shops/{tenant_id}/overnight", headers=_auth())
+    assert response.status_code == 200
+    leads = response.json()["leads"]
+    assert len(leads) == 1
+    assert leads[0]["name"] == "Pat Example"
+    assert leads[0]["problem"] == "slow drain"
+    assert leads[0]["emergency"] is False
+    assert leads[0]["sms_sent"] is False
+    assert "time" in leads[0]
+    other = client.post(
+        "/shops",
+        json=_body(
+            name="Other Shop",
+            inbound_did="+12165550156",
+            owner_sms_e164="+12165550122",
+            service_area_zips=["44102"],
+        ),
+        headers=_auth(),
+    )
+    other_id = other.json()["tenant_id"]
+    empty = client.get(f"/shops/{other_id}/overnight", headers=_auth())
+    assert empty.json()["leads"] == []
+
+
+def test_patch_does_not_accept_vertical_or_live(monkeypatch) -> None:
+    client = _client(monkeypatch)
+    created = client.post("/shops", json=_body(inbound_did="+12165550166"), headers=_auth())
+    tenant_id = created.json()["tenant_id"]
+    response = client.patch(
+        f"/shops/{tenant_id}",
+        json={"vertical": "electrical", "name": "Still Plumbing"},
+        headers=_auth(),
+    )
+    assert response.status_code == 422
+    live = client.patch(
+        f"/shops/{tenant_id}",
+        json={"live": True},
+        headers=_auth(),
+    )
+    assert live.status_code == 422
+
