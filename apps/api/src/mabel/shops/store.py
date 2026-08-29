@@ -1,4 +1,4 @@
-"""Load a shop packet inside tenant_scope. RLS matches on app.tenant_id."""
+"""Shop packet SQL. Runs inside tenant_scope. RLS matches on app.tenant_id."""
 
 from __future__ import annotations
 
@@ -6,7 +6,64 @@ from datetime import datetime, time
 from typing import Any
 from uuid import UUID
 
+from mabel.platform.tenancy import DuplicateDidError
 from mabel.shops.packet import PacketError, ShopPacket, normalize_zip
+
+SHOP_STATUS_DRAFT = "draft"
+
+
+def persist_onboarded_shop(conn: Any, packet: ShopPacket, inbound_did: str) -> None:
+    """INSERT tenant, inbound DID, and zips. Caller already SET LOCAL app.tenant_id.
+
+    inbound_dids RLS WITH CHECK matches tenant_id to that setting, so one
+    transaction is enough. The app role stays ordinary. No extra SQL function.
+    """
+    existing = conn.execute(
+        "SELECT app.resolve_tenant_from_did(%s)",
+        (inbound_did,),
+    ).fetchone()
+    if existing is not None and existing[0] is not None:
+        raise DuplicateDidError("Mabel already answers this number.")
+
+    conn.execute(
+        """
+        INSERT INTO tenants (
+            id, name, vertical, status, timezone, owner_sms_e164,
+            after_hours_start, after_hours_end, greeting_notes
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """,
+        (
+            str(packet.tenant_id),
+            packet.name,
+            packet.vertical,
+            SHOP_STATUS_DRAFT,
+            packet.timezone,
+            packet.owner_sms_e164,
+            packet.after_hours_start,
+            packet.after_hours_end,
+            packet.greeting_notes,
+        ),
+    )
+    try:
+        conn.execute(
+            "INSERT INTO inbound_dids (e164, tenant_id) VALUES (%s, %s)",
+            (inbound_did, str(packet.tenant_id)),
+        )
+    except Exception as exc:
+        if _is_unique_violation(exc):
+            raise DuplicateDidError("Mabel already answers this number.") from exc
+        raise
+
+    for zip_code in dict.fromkeys(packet.service_area_zips):
+        conn.execute(
+            "INSERT INTO service_area_zips (tenant_id, zip) VALUES (%s, %s)",
+            (str(packet.tenant_id), zip_code),
+        )
+
+
+def _is_unique_violation(exc: BaseException) -> bool:
+    return getattr(exc, "sqlstate", None) == "23505"
 
 
 def fetch_shop_packet(conn: Any, tenant_id: UUID) -> ShopPacket:
