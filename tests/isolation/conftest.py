@@ -79,12 +79,16 @@ def _load_sql() -> str:
     carries over between runs.
 
     0002 is skipped: it is pg_cron, which a scratch Postgres does not have and
-    which none of these tests exercise. 0003 is included, because it carries
-    the DID resolution function, without which no call can be routed at all.
+    which none of these tests exercise. 0003 and 0004 are included, because
+    they carry the resolution functions — without them no inbound call can be
+    routed and no inbound SMS can be attributed.
     """
-    core = _module(MIGRATIONS / "0001_v2_schema.py")
-    did = _module(MIGRATIONS / "0003_did_resolution.py")
-    return "\n".join(core.SECTIONS) + "\n" + did.FUNCTION
+    parts = [
+        "\n".join(_module(MIGRATIONS / "0001_v2_schema.py").SECTIONS),
+        _module(MIGRATIONS / "0003_did_resolution.py").FUNCTION,
+        _module(MIGRATIONS / "0004_sms_sender_resolution.py").FUNCTION,
+    ]
+    return "\n".join(parts)
 
 
 def pytest_collection_modifyitems(config, items):
