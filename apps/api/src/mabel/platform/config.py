@@ -14,6 +14,7 @@ class Settings:
     mcp_token_secret: str | None
     xai_webhook_secret: str | None
     xai_api_key_present: bool
+    telnyx_api_key_present: bool
 
 
 def load_settings() -> Settings:
@@ -22,6 +23,7 @@ def load_settings() -> Settings:
         mcp_token_secret=_optional("MABEL_MCP_TOKEN_SECRET"),
         xai_webhook_secret=_optional("XAI_WEBHOOK_SECRET"),
         xai_api_key_present=bool(_optional("XAI_API_KEY")),
+        telnyx_api_key_present=bool(_optional("TELNYX_API_KEY")),
     )
 
 
@@ -43,6 +45,10 @@ def require_webhook_secret() -> str:
 
 def xai_ready() -> bool:
     return bool(_optional("XAI_API_KEY"))
+
+
+def telnyx_ready() -> bool:
+    return bool(_optional("TELNYX_API_KEY"))
 
 
 def _optional(name: str) -> str | None:

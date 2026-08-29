@@ -15,7 +15,12 @@ SECRET = "test-webhook-secret-not-a-real-key"
 DID = "+12165550199"
 
 
-def _client(monkeypatch, *, xai_key: str | None = None) -> TestClient:
+def _client(
+    monkeypatch,
+    *,
+    xai_key: str | None = None,
+    telnyx_key: str | None = None,
+) -> TestClient:
     reset_directory()
     directory().register(
         DID,
@@ -26,6 +31,10 @@ def _client(monkeypatch, *, xai_key: str | None = None) -> TestClient:
         monkeypatch.setenv("XAI_API_KEY", xai_key)
     else:
         monkeypatch.delenv("XAI_API_KEY", raising=False)
+    if telnyx_key:
+        monkeypatch.setenv("TELNYX_API_KEY", telnyx_key)
+    else:
+        monkeypatch.delenv("TELNYX_API_KEY", raising=False)
     return TestClient(create_app())
 
 
@@ -64,13 +73,23 @@ def _headers(body: bytes, secret: str = SECRET) -> dict[str, str]:
 
 
 def test_webhook_fails_closed_without_xai_key(monkeypatch) -> None:
-    client = _client(monkeypatch)
+    client = _client(monkeypatch, telnyx_key="present-but-not-logged")
     body = _payload()
     response = client.post("/voice/webhook", content=body, headers=_headers(body))
     assert response.status_code == 503
     assert "xAI is not configured" in response.json()["detail"]
     assert "sk-" not in response.text
     assert SECRET not in response.text
+    assert "present-but-not-logged" not in response.text
+
+
+def test_webhook_fails_closed_without_telnyx_key(monkeypatch) -> None:
+    client = _client(monkeypatch, xai_key="present-but-not-logged")
+    body = _payload()
+    response = client.post("/voice/webhook", content=body, headers=_headers(body))
+    assert response.status_code == 503
+    assert "Telnyx is not configured" in response.json()["detail"]
+    assert "present-but-not-logged" not in response.text
 
 
 def test_webhook_rejects_bad_signature(monkeypatch) -> None:
@@ -97,20 +116,27 @@ def test_webhook_unknown_did(monkeypatch) -> None:
 
 
 def test_webhook_does_not_join_even_when_key_present(monkeypatch) -> None:
-    client = _client(monkeypatch, xai_key="present-but-not-logged")
+    client = _client(
+        monkeypatch,
+        xai_key="present-but-not-logged",
+        telnyx_key="also-present-not-logged",
+    )
     body = _payload()
     response = client.post("/voice/webhook", content=body, headers=_headers(body))
     assert response.status_code == 200
     data = response.json()
     assert data["joined"] is False
+    assert data["live"] is False
     assert data["voice_model"] == VOICE_MODEL
     assert data["tenant_resolved"] is True
     assert "present-but-not-logged" not in response.text
+    assert "also-present-not-logged" not in response.text
 
 
 def test_webhook_without_signing_secret_fails_closed(monkeypatch) -> None:
     monkeypatch.delenv("XAI_WEBHOOK_SECRET", raising=False)
     monkeypatch.delenv("XAI_API_KEY", raising=False)
+    monkeypatch.delenv("TELNYX_API_KEY", raising=False)
     client = TestClient(create_app())
     body = _payload()
     response = client.post("/voice/webhook", content=body, headers=_headers(body))
