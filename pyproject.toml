@@ -41,3 +41,10 @@ pythonVersion = "3.12"
 typeCheckingMode = "standard"
 include = ["packages", "apps/api", "apps/media", "apps/worker", "tests"]
 exclude = ["**/node_modules", "**/__pycache__", "apps/api/src/mabel"]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+  "mabel_domain", "mabel_verticals", "mabel_db", "mabel_xai", "mabel_telnyx",
+  "mabel_mcp", "mabel_sms", "mabel_integrations",
+  "mabel_api", "mabel_media", "mabel_worker",
+]
